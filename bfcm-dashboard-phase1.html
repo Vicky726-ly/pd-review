@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大促行为洞察看板 · Ptengine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f7f6f2;--surface:#fff;--surface2:#f0efe9;
+  --border:rgba(0,0,0,.08);--border-s:rgba(0,0,0,.15);
+  --t:#1a1916;--t2:#5c5a54;--t3:#9c9a92;
+  --accent:#2b4fff;--accent-bg:#eef1ff;--accent-t:#1a35cc;
+  --teal:#0f6e56;--teal-bg:#e1f5ee;--teal-t:#085041;
+  --coral:#d85a30;--coral-bg:#faece7;--coral-t:#712b13;
+  --amber:#ba7517;--amber-bg:#faeeda;--amber-t:#633806;
+  --purple:#534ab7;--purple-bg:#eeedfe;--purple-t:#3c3489;
+  --r:10px;--rl:16px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#131210;--surface:#1e1c19;--surface2:#28261f;
+  --border:rgba(255,255,255,.08);--border-s:rgba(255,255,255,.15);
+  --t:#e8e6de;--t2:#9c9a92;--t3:#5c5a54;
+  --accent:#6b85ff;--accent-bg:#1a2040;--accent-t:#a0b0ff;
+  --teal-bg:#04342c;--teal-t:#5dcaa5;
+  --coral-bg:#4a1b0c;--coral-t:#f0997b;
+  --amber-bg:#412402;--amber-t:#ef9f27;
+  --purple-bg:#26215c;--purple-t:#afa9ec;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t);font-family:'Sora',sans-serif;font-size:14px;line-height:1.6}
+.mono{font-family:DM Mono,monospace}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.main{padding:28px 36px;max-width:1160px}
+.logo{padding:0 18px 18px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.logo-t{font-size:13px;font-weight:600;color:var(--t);letter-spacing:-.02em}
+.logo-s{font-size:11px;color:var(--t3);margin-top:2px}
+.nav-sec{padding:0 10px;margin-bottom:4px}
+.nav-lbl{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.08em;text-transform:uppercase;padding:0 8px;margin-bottom:3px}
+.nav-item{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:7px;cursor:pointer;color:var(--t2);font-size:12px;transition:all .12s;border:none;background:none;width:100%;text-align:left;font-family:'Sora',sans-serif}
+.nav-item:hover{background:var(--surface2);color:var(--t)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent-t);font-weight:500}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0}
+.nav-item.active .nav-dot{opacity:1}
+.ph{margin-bottom:22px}
+.bc{font-size:11px;color:var(--t3);margin-bottom:5px}
+.pt{font-size:22px;font-weight:600;color:var(--t);letter-spacing:-.03em}
+.pm{font-size:13px;color:var(--t2);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.section{margin-bottom:40px}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.sh-l{flex:1;min-width:0}
+.st{font-size:13px;font-weight:600;color:var(--t)}
+.sm{font-size:11px;color:var(--t3);margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:18px}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.sg{display:grid;gap:10px;margin-bottom:20px}
+.sc{background:var(--surface2);border-radius:var(--r);padding:12px 14px}
+.sl{font-size:11px;color:var(--t3);margin-bottom:4px}
+.sv{font-size:20px;font-weight:600;letter-spacing:-.03em;font-family:DM Mono,monospace}
+.sd{font-size:11px;margin-top:2px}
+.up{color:#0f6e56}.dn{color:#d85a30}.nu{color:var(--t3)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.b-teal{background:var(--teal-bg);color:var(--teal-t)}
+.b-coral{background:var(--coral-bg);color:var(--coral-t)}
+.b-amber{background:var(--amber-bg);color:var(--amber-t)}
+.b-purple{background:var(--purple-bg);color:var(--purple-t)}
+.b-acc{background:var(--accent-bg);color:var(--accent-t)}
+.b-gray{background:var(--surface2);color:var(--t2)}
+.ib{border-left:3px solid var(--accent);background:var(--accent-bg);border-radius:0 var(--r) var(--r) 0;padding:10px 12px;margin-top:10px}
+.ib.g{border-color:var(--teal);background:var(--teal-bg)}
+.ib.w{border-color:var(--amber);background:var(--amber-bg)}
+.ib.b{border-color:var(--coral);background:var(--coral-bg)}
+.ib-t{font-size:11px;font-weight:600;color:var(--accent-t);margin-bottom:2px}
+.ib.g .ib-t{color:var(--teal-t)}.ib.w .ib-t{color:var(--amber-t)}.ib.b .ib-t{color:var(--coral-t)}
+.ib-b{font-size:11px;color:var(--t2);line-height:1.55}
+.tr{display:flex;gap:3px;padding:3px;background:var(--surface2);border-radius:8px;flex-shrink:0}
+.tb{padding:4px 9px;border-radius:6px;border:none;background:none;font-size:11px;color:var(--t2);cursor:pointer;font-family:'Sora',sans-serif;transition:all .12s;white-space:nowrap}
+.tb.on{background:var(--surface);color:var(--t);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.cw{position:relative;width:100%}
+.div{height:1px;background:var(--border);margin:28px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ch-row{display:grid;grid-template-columns:100px 1fr 58px 58px 58px;gap:7px;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:var(--r)}
+.ch-row.hd{background:none;padding:3px 12px}
+.ch-n{font-size:12px;font-weight:500;color:var(--t)}
+.ch-bw{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.ch-b{height:100%;border-radius:3px}
+.cn{font-family:DM Mono,monospace;font-size:11px;color:var(--t2);text-align:right}
+.cn.hi{color:var(--teal);font-weight:500}.cn.lo{color:var(--t3)}
+.lp-row{display:grid;grid-template-columns:28px 108px 1fr 70px 70px 70px;gap:7px;align-items:center;padding:8px 12px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface)}
+.lp-row.hd{background:none;border-color:transparent;padding:3px 12px}
+.lp-rk{width:22px;height:22px;background:var(--surface2);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--t3);font-family:DM Mono,monospace}
+.lv{font-family:DM Mono,monospace;font-size:11px;text-align:right}
+.lg{color:var(--teal)}.lw{color:var(--amber)}.lb{color:var(--coral)}
+.rg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.rc{padding:14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface)}
+.rn{font-size:13px;font-weight:600;color:var(--t);margin-bottom:10px}
+.rbr{display:grid;grid-template-columns:58px 1fr 38px;gap:5px;align-items:center;margin-bottom:4px}
+.rbl{font-size:10px;color:var(--t3)}
+.rbb{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.rbf{height:100%;border-radius:2px}
+.aov-row{display:grid;grid-template-columns:90px repeat(6,1fr);gap:5px;align-items:center;padding:7px 10px;border-radius:var(--r)}
+.aov-row.hd{color:var(--t3);font-size:10px}
+.aov-row.even{background:var(--surface2)}
+.av{font-family:DM Mono,monospace;font-size:11px;text-align:center}
+.cat-row{display:grid;grid-template-columns:90px 100px 1fr 60px 60px;gap:7px;align-items:center;padding:7px 12px;border-radius:var(--r)}
+.cat-row.hd{color:var(--t3);font-size:10px;padding:3px 12px}
+.cat-row.even{background:var(--surface2)}
+
+/* ── My data comparison styles ── */
+.my-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:28px}
+.my-panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.my-panel-title{font-size:13px;font-weight:600;color:var(--t)}
+.my-panel-sub{font-size:11px;color:var(--t3);margin-left:auto}
+.my-panel-body{padding:18px}
+.api-status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.api-status.connected{background:var(--teal-bg);color:var(--teal-t)}
+.api-status.idle{background:var(--surface2);color:var(--t3)}
+.api-status.error{background:var(--coral-bg);color:var(--coral-t)}
+.api-pulse{width:6px;height:6px;border-radius:50%;background:currentColor}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.api-status.connected .api-pulse{animation:pulse 2s infinite}
+.field-row{display:grid;grid-template-columns:160px 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.field-lbl{font-size:12px;color:var(--t2)}
+.field-in{padding:6px 10px;border:1px solid var(--border-s);border-radius:var(--r);background:var(--surface);color:var(--t);font-size:12px;font-family:'Sora',sans-serif;width:100%}
+.field-in:focus{outline:none;border-color:var(--accent)}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px}
+.btn{padding:7px 14px;border-radius:var(--r);border:1px solid var(--border-s);background:var(--surface);color:var(--t);font-size:12px;font-weight:500;cursor:pointer;font-family:'Sora',sans-serif;transition:all .12s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.9}
+.btn-sm{padding:4px 10px;font-size:11px}
+.status{padding:10px 12px;border-radius:var(--r);font-size:12px;margin-top:10px;display:none}
+.status.ok{background:var(--teal-bg);color:var(--teal-t);display:block}
+.status.err{background:var(--coral-bg);color:var(--coral-t);display:block}
+
+/* ── Per-module comparison overlay ── */
+/* Small "我的数据" toggle appears inside each section header */
+.my-toggle{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border-s);background:var(--surface);color:var(--t2);font-family:'Sora',sans-serif;transition:all .12s;flex-shrink:0}
+.my-toggle.active{background:var(--accent-bg);color:var(--accent-t);border-color:var(--accent)}
+.my-toggle-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* Comparison bar row — used within each module */
+.cmp-row{display:grid;align-items:center;padding:8px 12px;border-radius:var(--r);gap:8px}
+.cmp-row.even{background:var(--surface2)}
+.cmp-label{font-size:12px;color:var(--t2)}
+.cmp-bars{display:flex;align-items:center;gap:6px}
+.cmp-bar-bg{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;position:relative}
+.cmp-bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.cmp-val{font-family:DM Mono,monospace;font-size:11px;min-width:36px;text-align:right}
+.cmp-val.my{color:var(--accent)}
+.cmp-val.ind{color:var(--t2)}
+.delta-pill{font-size:10px;font-weight:600;font-family:DM Mono,monospace;padding:2px 6px;border-radius:5px;flex-shrink:0;min-width:44px;text-align:center}
+.dp-pos{background:var(--teal-bg);color:var(--teal-t)}
+.dp-neg{background:var(--coral-bg);color:var(--coral-t)}
+.dp-neu{background:var(--surface2);color:var(--t3)}
+
+/* Dimension selector (for choosing which segment to compare against) */
+.dim-sel{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface2);border-radius:var(--r);margin-bottom:10px;flex-wrap:wrap}
+.dim-sel-lbl{font-size:11px;color:var(--t3)}
+.dim-chip{padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--t2);font-family:'Sora',sans-serif;transition:all .12s}
+.dim-chip:hover{background:var(--surface2)}
+.dim-chip.sel{background:var(--accent-bg);color:var(--accent-t);border-color:var(--accent);font-weight:500}
+.dim-select{padding:4px 8px;border:1px solid var(--border-s);border-radius:var(--r);background:var(--surface);color:var(--t);font-size:11px;font-family:'Sora',sans-serif}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-t">Ptengine</div>
+    <div class="logo-s">大促行为洞察看板</div>
+  </div>
+  <div class="nav-sec">
+    <div class="nav-lbl">我的数据</div>
+    <button class="nav-item" onclick="goTo('s-mydata',this)" style="color:var(--accent-t)"><span class="nav-dot" style="background:var(--accent);opacity:1"></span>接入 / 输入数据</button>
+  </div>
+  <div class="nav-sec" style="margin-top:10px">
+    <div class="nav-lbl">核心模块</div>
+    <button class="nav-item active" onclick="goTo('s1',this)"><span class="nav-dot"></span>整体转化大盘</button>
+    <button class="nav-item" onclick="goTo('s2',this)"><span class="nav-dot"></span>流量渠道质效</button>
+    <button class="nav-item" onclick="goTo('s3',this)"><span class="nav-dot"></span>落地页健康诊断</button>
+    <button class="nav-item" onclick="goTo('s5',this)"><span class="nav-dot"></span>大促行为时序</button>
+  </div>
+  <div class="nav-sec" style="margin-top:10px">
+    <div class="nav-lbl">洞察增强</div>
+    <button class="nav-item" onclick="goTo('s6',this)"><span class="nav-dot"></span>客单价分层</button>
+    <button class="nav-item" onclick="goTo('s7',this)"><span class="nav-dot"></span>品类转化洞察</button>
+    <button class="nav-item" onclick="goTo('s8',this)"><span class="nav-dot"></span>地区转化差异</button>
+    <button class="nav-item" onclick="goTo('s9',this)"><span class="nav-dot"></span>落地页 × 客单价</button>
+
+  </div>
+
+</nav>
+
+<main class="main">
+
+<div class="ph">
+  <div class="bc">Ptengine Analytics · 促销季洞察报告</div>
+  <!-- Editable title -->
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <div class="pt" id="page-title-display" style="cursor:pointer;border-bottom:1.5px dashed transparent;transition:border-color .15s"
+      onclick="startEditTitle()" title="点击编辑标题">2024 大促行为数据全景</div>
+    <input id="page-title-input" type="text" value="2024 大促行为数据全景"
+      style="display:none;font-size:22px;font-weight:600;letter-spacing:-.03em;color:var(--t);background:none;border:none;border-bottom:2px solid var(--accent);outline:none;font-family:'Sora',sans-serif;min-width:320px"
+      onblur="finishEditTitle()" onkeydown="if(event.key==='Enter')this.blur()">
+    <span style="font-size:11px;color:var(--t3);opacity:.5" id="title-edit-hint">✏</span>
+  </div>
+  <div class="pm">
+    <!-- Editable date label -->
+    <span class="badge b-teal" id="date-label-display" style="cursor:pointer" onclick="startEditDate()" title="点击编辑">大促 11.01–11.30</span>
+    <input id="date-label-input" type="text" value="大促 11.01–11.30"
+      style="display:none;padding:2px 8px;border:1px solid var(--accent);border-radius:20px;font-size:11px;font-weight:500;color:var(--teal-t);background:var(--teal-bg);outline:none;font-family:'Sora',sans-serif;min-width:120px"
+      onblur="finishEditDate()" onkeydown="if(event.key==='Enter')this.blur()">
+    <span style="font-size:12px;color:var(--t3)">行业基准 · 跨品牌脱敏聚合</span>
+    <span class="badge b-acc" id="my-data-badge" style="display:none">我的数据已加载</span>
+  </div>
+</div>
+
+
+
+<!-- ══════════════════════════════════
+     我的数据接入
+     ══════════════════════════════════ -->
+<div class="section" id="s-mydata">
+  <div class="sh">
+    <div class="sh-l"><div class="st">我的数据接入</div><div class="sm">接入后，每个模块的行业数据旁将出现"我的"对比栏</div></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm" id="btn-manual-tab" onclick="switchMyTab('manual')" style="font-weight:600">手动输入</button>
+      <button class="btn btn-sm" id="btn-api-tab" onclick="switchMyTab('api')">API 对接</button>
+    </div>
+  </div>
+
+  <!-- Manual -->
+  <div id="mytab-manual">
+    <div class="card" style="padding:18px">
+      <div style="font-size:12px;font-weight:600;color:var(--t);margin-bottom:3px">填入你品牌的大促核心指标</div>
+      <div style="font-size:11px;color:var(--t3);margin-bottom:14px">填入越多，各模块对比越完整。未填的指标该模块对比栏将隐藏。</div>
+      <div class="input-grid">
+        <div><div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">转化指标</div>
+          <div class="field-row"><label class="field-lbl">整体 CVR (%)</label><input class="field-in" id="my-cvr" type="number" step="0.01" placeholder="如：1.24"></div>
+          <div class="field-row"><label class="field-lbl">新用户 CVR (%)</label><input class="field-in" id="my-new-cvr" type="number" step="0.01" placeholder="如：0.68"></div>
+          <div class="field-row"><label class="field-lbl">回访用户 CVR (%)</label><input class="field-in" id="my-ret-cvr" type="number" step="0.01" placeholder="如：1.80"></div>
+          <div class="field-row"><label class="field-lbl">新访用户比例 (%)</label><input class="field-in" id="my-new-pct" type="number" step="0.1" placeholder="如：62.5"></div>
+        </div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">渠道 CVR</div>
+          <div class="field-row"><label class="field-lbl">广告 CVR (%)</label><input class="field-in" id="my-ads-cvr" type="number" step="0.01" placeholder="如：0.75"></div>
+          <div class="field-row"><label class="field-lbl">Email CVR (%)</label><input class="field-in" id="my-email-cvr" type="number" step="0.01" placeholder="如：3.10"></div>
+          <div class="field-row"><label class="field-lbl">直接访问 CVR (%)</label><input class="field-in" id="my-direct-cvr" type="number" step="0.01" placeholder="如：1.90"></div>
+          <div class="field-row"><label class="field-lbl">搜索引擎 CVR (%)</label><input class="field-in" id="my-search-cvr" type="number" step="0.01" placeholder="如：2.10"></div>
+        </div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">落地页 & 行为</div>
+          <div class="field-row"><label class="field-lbl">Top1 落地页 CVR (%)</label><input class="field-in" id="my-lp-cvr" type="number" step="0.01" placeholder="如：0.95"></div>
+          <div class="field-row"><label class="field-lbl">跳出率 (%)</label><input class="field-in" id="my-bounce" type="number" step="0.1" placeholder="如：65.0"></div>
+          <div class="field-row"><label class="field-lbl">首屏流失率 (%)</label><input class="field-in" id="my-above" type="number" step="0.1" placeholder="如：38.0"></div>
+        </div>
+        <div><div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:8px">细分数据（可选，用于精准对标）</div>
+          <div class="field-row" style="grid-template-columns:160px 1fr"><label class="field-lbl">主要客单价区间</label>
+            <select class="field-in" id="my-aov-seg"><option value="">不指定</option><option value="0">0–100元</option><option value="1">100–200元</option><option value="2">201–500元</option><option value="3">501–1000元</option><option value="4">1001–2000元</option><option value="5">2001元+</option></select>
+          </div>
+          <div class="field-row" style="grid-template-columns:160px 1fr"><label class="field-lbl">所在品类</label>
+            <select class="field-in" id="my-cat-seg"><option value="">不指定</option><option>母婴</option><option>储能</option><option>智能科技</option><option>假发</option><option>户外装备</option><option>鞋服</option><option>消费电子/数码配件</option><option>箱包</option><option>Ebike</option><option>家居硬件</option><option>电动滑板车</option><option>汽车配件</option><option>软件控制器</option></select>
+          </div>
+          <div class="field-row" style="grid-template-columns:160px 1fr"><label class="field-lbl">主要目标地区</label>
+            <select class="field-in" id="my-region-seg"><option value="">不指定</option><option value="0">北美</option><option value="1">欧洲</option><option value="2">其他地区</option></select>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="applyMyData()">生成对比视图</button>
+        <button class="btn btn-sm" onclick="clearMyData()" id="btn-clear" style="display:none">清除数据</button>
+      </div>
+      <div class="status" id="st-manual"></div>
+    </div>
+  </div>
+
+  <!-- API tab — Ptengine Open API 直连 -->
+  <div id="mytab-api" style="display:none">
+    <div class="card" style="padding:18px">
+
+      <!-- Header row -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--t)">Ptengine Open API 直连</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px">自动拉取你网站的转化率、渠道、跳出率数据，填入对比视图</div>
+        </div>
+        <span class="api-status idle" id="api-badge" style="margin-left:auto"><span class="api-pulse"></span>未连接</span>
+      </div>
+      <!-- Preview mode notice -->
+      <div id="preview-notice" style="display:none;background:var(--amber-bg);border-radius:var(--r);padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--amber-t);line-height:1.6">
+        <strong>预览模式</strong> — 当前环境无法访问外部 API，点击"拉取数据并生成对比"将使用模拟数据演示效果。<br>
+        部署到正式域名后（Netlify / Vercel），填入真实 API Key 即可拉取真实数据。
+      </div>
+      <!-- Restore notice -->
+      <div id="restore-notice" style="display:none;background:var(--teal-bg);border-radius:var(--r);padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--teal-t);align-items:center;justify-content:space-between">
+        <span>✓ 已恢复上次填写的内容</span>
+        <button onclick="clearSavedForm()" style="font-size:10px;padding:2px 8px;border-radius:5px;border:1px solid var(--teal);background:none;color:var(--teal-t);cursor:pointer">清除</button>
+      </div>
+
+      <!-- Step 1: credentials -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px">① 认证信息</div>
+          <div class="field-row" style="margin-bottom:7px">
+            <label class="field-lbl" style="font-size:11px">API Key</label>
+            <div style="display:flex;gap:5px;align-items:center">
+              <input class="field-in" id="pt-apikey" type="text" placeholder="pt-xxxxxxxxxxxxxxxx" autocomplete="off" style="flex:1;font-family:DM Mono,monospace;letter-spacing:.04em">
+              <button type="button" id="btn-toggle-key" onclick="toggleKeyVis()" style="padding:5px 9px;border-radius:var(--r);border:1px solid var(--border-s);background:var(--surface);color:var(--t2);font-size:11px;cursor:pointer;white-space:nowrap">隐藏</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="field-lbl" style="font-size:11px">Profile ID</label>
+            <input class="field-in" id="pt-profileid" placeholder="8位网站ID，如 566d12f9">
+          </div>
+          <div style="font-size:10px;color:var(--t3);margin-top:5px;line-height:1.6">
+            API Key：进入 Experience → 设置 → 外部应用集成 → API 密钥<br>
+            Profile ID：产品 URL 中 <span class="mono" style="font-size:10px">/app/{profileId}/home</span> 的8位字符
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px">② 查询时间范围</div>
+          <div style="font-size:10px;color:var(--t3);margin-bottom:5px">大促期间</div>
+          <div class="field-row" style="margin-bottom:6px">
+            <label class="field-lbl" style="font-size:11px">大促 开始</label>
+            <input class="field-in" id="pt-start" type="date" value="2024-11-01">
+          </div>
+          <div class="field-row" style="margin-bottom:8px">
+            <label class="field-lbl" style="font-size:11px">大促 结束</label>
+            <input class="field-in" id="pt-end" type="date" value="2024-11-30">
+          </div>
+          <div style="font-size:10px;color:var(--t3);margin-bottom:5px">平时对比期间 <span style="color:var(--accent-t)">（用于「我的大促 vs 我的平时」）</span></div>
+          <div class="field-row" style="margin-bottom:6px">
+            <label class="field-lbl" style="font-size:11px">平时 开始</label>
+            <input class="field-in" id="pt-norm-start" type="date" value="2024-08-01">
+          </div>
+          <div class="field-row" style="margin-bottom:8px">
+            <label class="field-lbl" style="font-size:11px">平时 结束</label>
+            <input class="field-in" id="pt-norm-end" type="date" value="2024-10-31">
+          </div>
+          <div style="margin-bottom:6px">
+            <label style="font-size:11px;color:var(--t2);display:block;margin-bottom:5px">转化目标名称</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <div style="position:relative;flex:1">
+                <input class="field-in" id="pt-conversion" placeholder="如：购买完成（留空则不拉取CVR）" style="width:100%;padding-right:28px" autocomplete="off" oninput="filterGoalList(this.value)">
+                <!-- Dropdown list -->
+                <div id="goal-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--r);box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:100;max-height:180px;overflow-y:auto;margin-top:3px"></div>
+              </div>
+              <button class="btn btn-sm" id="btn-fetch-goals" onclick="ptFetchGoals()" style="white-space:nowrap;flex-shrink:0">查询目标列表</button>
+            </div>
+            <div id="goal-fetch-status" style="font-size:10px;color:var(--t3);margin-top:4px;display:none"></div>
+          </div>
+          <div class="field-row">
+            <label class="field-lbl" style="font-size:11px">我的品类</label>
+            <select class="field-in" id="pt-category">
+              <option value="">不指定（用全品类均值对比）</option>
+              <option value="母婴">母婴</option>
+              <option value="储能">储能</option>
+              <option value="智能科技">智能科技</option>
+              <option value="假发">假发</option>
+              <option value="户外装备">户外装备</option>
+              <option value="鞋服">鞋服</option>
+              <option value="消费电子/数码配件">消费电子/数码配件</option>
+              <option value="箱包">箱包</option>
+              <option value="Ebike">Ebike</option>
+              <option value="家居硬件">家居硬件</option>
+              <option value="电动滑板车">电动滑板车</option>
+              <option value="汽车配件">汽车配件</option>
+              <option value="软件控制器">软件控制器</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: page URLs -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:6px">③ 要分析的落地页 URL（最多 5 个）</div>
+        <div style="display:grid;gap:6px" id="pt-url-list">
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:var(--t3);min-width:14px;text-align:center">1</span>
+            <input class="field-in" id="pt-url-0" type="url" placeholder="https://your-store.com/sale（必填）" style="flex:1">
+            <button class="btn btn-sm" onclick="ptTestConn(0)" id="btn-pt-test" style="white-space:nowrap">测试连接</button>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:var(--t3);min-width:14px;text-align:center">2</span>
+            <input class="field-in" id="pt-url-1" type="url" placeholder="https://your-store.com/products/a（选填）" style="flex:1">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:var(--t3);min-width:14px;text-align:center">3</span>
+            <input class="field-in" id="pt-url-2" type="url" placeholder="https://your-store.com/products/b（选填）" style="flex:1">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:var(--t3);min-width:14px;text-align:center">4</span>
+            <input class="field-in" id="pt-url-3" type="url" placeholder="https://your-store.com/products/c（选填）" style="flex:1">
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:10px;color:var(--t3);min-width:14px;text-align:center">5</span>
+            <input class="field-in" id="pt-url-4" type="url" placeholder="https://your-store.com/products/d（选填）" style="flex:1">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--t3);margin-top:5px;line-height:1.6">每个 URL 独立拉取指标，结果汇总后展示。URL 1 为必填，2–5 选填。</div>
+      </div>
+
+      <!-- Fetch button -->
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="ptFetchAll()" id="btn-pt-fetch">拉取数据并生成对比</button>
+        <div id="pt-progress" style="display:none;flex:1">
+          <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">
+            <div id="pt-prog-bar" style="height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .3s ease"></div>
+          </div>
+          <div id="pt-prog-label" style="font-size:10px;color:var(--t3);margin-top:4px">准备中...</div>
+        </div>
+      </div>
+      <div class="status" id="st-api"></div>
+
+      <!-- Fetched data preview -->
+      <div id="pt-preview" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:600;color:var(--t);margin-bottom:8px">拉取结果预览</div>
+        <div id="pt-preview-content"></div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- ① 整体转化大盘 -->
+<div class="section" id="s1">
+  <div class="sh">
+    <div class="sh-l"><div class="st">① 整体转化大盘</div><div class="sm">行业基准 / 我的大促 vs 平时 / 我的 vs 品类均值</div></div>
+
+  </div>
+  <!-- hidden compat -->
+  <span id="s1-btn-norm" style="display:none"></span>
+  <span id="s1-btn-cat" style="display:none"></span>
+  <span id="s1-my-hint" style="display:none"></span>
+
+  <!-- 10 张 KPI 卡片：全品类 + 所选品类 -->
+  <div style="margin-bottom:16px">
+    <!-- 第一行：全品类行业基准 -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.04em;text-transform:uppercase">全品类均值</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px">
+      <div class="sc"><div class="sl">日均爆发</div><div class="sv" style="font-size:17px">1.73×</div><div class="sd up">↑ vs 平时 1.00×</div></div>
+      <div class="sc"><div class="sl">整体 CVR</div><div class="sv" style="font-size:17px">0.86%</div><div class="sd up">↑ vs 平时 0.62%</div></div>
+      <div class="sc"><div class="sl">新访 CVR</div><div class="sv" style="font-size:17px">0.57%</div><div class="sd up">↑ vs 平时 0.44%</div></div>
+      <div class="sc"><div class="sl">回访 CVR</div><div class="sv" style="font-size:17px">1.43%</div><div class="sd up">↑ vs 平时 0.98%</div></div>
+      <div class="sc"><div class="sl">广告 CVR</div><div class="sv" style="font-size:17px">0.60%</div><div class="sd up">↑ vs 平时 0.48%</div></div>
+    </div>
+    <!-- 第二行：所选品类 -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:10px;font-weight:600;color:var(--accent-t);letter-spacing:.04em;text-transform:uppercase" id="cat-row-label">全品类均值</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px" id="cat-kpi-bar">
+      <div class="sc"><div class="sl"><span class="cat-kpi-n">全品类</span> 日均爆发</div><div class="sv" style="font-size:17px" id="cat-kpi-burst">—</div><div class="sd up" id="cat-kpi-burst-d"></div></div>
+      <div class="sc"><div class="sl"><span class="cat-kpi-n">全品类</span> 整体 CVR</div><div class="sv" style="font-size:17px" id="cat-kpi-cvr">—</div><div class="sd up" id="cat-kpi-cvr-d"></div></div>
+      <div class="sc"><div class="sl"><span class="cat-kpi-n">全品类</span> 新访 CVR</div><div class="sv" style="font-size:17px" id="cat-kpi-new">—</div><div class="sd up" id="cat-kpi-new-d"></div></div>
+      <div class="sc"><div class="sl"><span class="cat-kpi-n">全品类</span> 回访 CVR</div><div class="sv" style="font-size:17px" id="cat-kpi-ret">—</div><div class="sd up" id="cat-kpi-ret-d"></div></div>
+      <div class="sc"><div class="sl"><span class="cat-kpi-n">全品类</span> 广告 CVR</div><div class="sv" style="font-size:17px" id="cat-kpi-ads">—</div><div class="sd up" id="cat-kpi-ads-d"></div></div>
+    </div>
+  </div>
+
+  <!-- 图表主区：全宽，三组对比 -->
+  <div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;color:var(--t)" id="s1-chart-title">我的大促 vs 行业大促 vs 品类大促</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap" id="s1-legend">
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#2b4fff;display:inline-block"></span><span id="leg0">我的大促</span></span>
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#534ab7;display:inline-block"></span><span id="leg1">行业大促</span></span>
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#0f6e56;display:inline-block"></span><span id="leg2" class="cat-kpi-n">全品类</span><span style="margin-left:2px">大促</span></span>
+      </div>
+    </div>
+    <div class="cw" style="height:260px"><canvas id="overviewChart" role="img" aria-label="整体CVR对比">整体CVR对比图</canvas></div>
+    <!-- 接入数据提示 -->
+    <div id="s1-my-hint-chart" style="margin-top:10px;padding:8px 12px;background:var(--surface2);border-radius:var(--r);font-size:11px;color:var(--t3);display:flex;align-items:center;justify-content:space-between">
+      <span>接入数据后，"我的大促"柱子将替换为真实数据</span>
+      <button class="btn btn-sm" style="font-size:10px;padding:2px 8px" onclick="goTo('s-mydata',null);switchMyTab('api')">去接入</button>
+    </div>
+    <div id="my-cmp-s1" style="display:none"><div id="cmp-rows-s1"></div></div>
+    <!-- hidden compat ids -->
+    <span id="ov-my-legend" style="display:none"></span>
+    <span id="ov-norm-legend" style="display:none"></span>
+    <span id="leg3" style="display:none"></span>
+    <span id="my-s1-kpis" style="display:none"></span>
+    <span id="my-s1-bfcm" style="display:none"></span>
+    <span id="my-s1-bfcm-d" style="display:none"></span>
+    <span id="my-s1-norm-card" style="display:none"></span>
+    <span id="my-s1-norm" style="display:none"></span>
+    <span id="my-s1-lift" style="display:none"></span>
+    <span id="my-s1-cat-card" style="display:none"></span>
+    <span id="my-s1-cat-lbl" style="display:none"></span>
+    <span id="my-s1-cat" style="display:none"></span>
+    <span id="my-s1-cat-d" style="display:none"></span>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- ② 流量渠道 -->
+<div class="section" id="s2">
+  <div class="sh">
+    <div class="sh-l"><div class="st">② 流量渠道质效</div><div class="sm">各渠道占比 × CVR · 量质双维度</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="my-toggle" id="my-tog-s2" onclick="toggleMyCmp('s2')" style="display:none"><span class="my-toggle-dot"></span>我的对比</button>
+      <div class="tr"><button class="tb on" onclick="setChMode('bfcm')">大促</button><button class="tb" onclick="setChMode('normal')">平时</button></div>
+    </div>
+  </div>
+  <!-- 渠道表格：全宽 -->
+  <div style="display:grid;gap:5px;margin-bottom:14px">
+    <div class="ch-row hd"><div style="font-size:10px;color:var(--t3)">渠道</div><div style="font-size:10px;color:var(--t3)">占比</div><div style="font-size:10px;color:var(--t3);text-align:right">%</div><div style="font-size:10px;color:var(--t3);text-align:right">CVR</div><div style="font-size:10px;color:var(--t3);text-align:right">质效</div></div>
+    <div id="ch-rows"></div>
+  </div>
+  <div id="my-cmp-s2" style="display:none;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:600;color:var(--t);margin-bottom:6px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block"></span>我的渠道 CVR vs 行业基准</div>
+    <div id="cmp-rows-s2"></div>
+  </div>
+
+  <!-- 四象限 + 洞察：并排，高度对齐 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+    <!-- 左：四象限图 -->
+    <div>
+      <div style="font-size:11px;font-weight:600;color:var(--t);margin-bottom:8px">四象限：量 × 质</div>
+      <div class="cw" style="height:240px"><canvas id="scatterChart" role="img" aria-label="渠道四象限">渠道散点图</canvas></div>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#534ab7;display:inline-block"></span>广告</span>
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#378add;display:inline-block"></span>直访</span>
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#d85a30;display:inline-block"></span>Email</span>
+        <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:7px;height:7px;border-radius:50%;background:#0f6e56;display:inline-block"></span>搜索</span>
+      </div>
+    </div>
+    <!-- 右：洞察卡片 2×2 -->
+    <div>
+      <div style="font-size:11px;font-weight:600;color:var(--t);margin-bottom:8px">渠道策略洞察</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--teal-bg);border-radius:var(--r);padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--teal-t);margin-bottom:4px">⭐ 明星渠道</div>
+          <div style="font-size:10px;color:var(--teal-t);opacity:.85;line-height:1.5">直访 24.6% + 1.60% CVR，品牌积累收益，大促 +58% 释放。</div>
+        </div>
+        <div style="background:var(--amber-bg);border-radius:var(--r);padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--amber-t);margin-bottom:4px">⚡ 提效重点</div>
+          <div style="font-size:10px;color:var(--amber-t);opacity:.85;line-height:1.5">广告 64% 流量但 CVR 0.60%。落地页迁至活动页，CVR 估升 30–90%。</div>
+        </div>
+        <div style="background:var(--accent-bg);border-radius:var(--r);padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--accent-t);margin-bottom:4px">🚀 放量机会</div>
+          <div style="font-size:10px;color:var(--accent-t);opacity:.85;line-height:1.5">Email 2.20%、搜索 1.54%——质量验证，大促前加大投入。</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--r);padding:10px 12px">
+          <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:4px">👀 审慎观察</div>
+          <div style="font-size:10px;color:var(--t3);line-height:1.5">社交 CVR 0.49%，占比 1.97%，品类差异大，需定位再加码。</div>
+        </div>
+      </div>
+      <div class="ib w" style="margin-top:10px"><div class="ib-t">广告：64% 流量 · 0.60% CVR · 最大落地页优化空间</div><div class="ib-b">广告 CVR 仅是 Email 的 27%。落地页承接是核心短板，大促期建议迁移至活动页或内容页。</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- ③ 落地页 -->
+<div class="section" id="s3">
+  <div class="sh">
+    <div class="sh-l">
+      <div class="st">③ 落地页健康度诊断</div>
+      <div class="sm">你的 Top3 落地页 · CVR / 跳出率 / 首屏流失 · 对标同品类 benchmark</div>
+    </div>
+
+  </div>
+
+  <!-- "接入数据" hint when no data -->
+  <div id="s3-no-data" style="padding:28px;text-align:center;background:var(--surface2);border-radius:var(--r);color:var(--t3);font-size:12px">
+    接入 Ptengine 数据后，此处将显示你真实的 Top1/2/3 落地页数据，并对标同品类行业 benchmark<br>
+    <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="goTo('s-mydata',null);switchMyTab('api')">去接入数据</button>
+  </div>
+
+  <!-- Table: shown after data loaded -->
+  <div id="s3-data-area" style="display:none">
+    <!-- benchmark tab (hidden by default) -->
+    <div id="s3-bm-tab" style="display:none;margin-bottom:12px">
+      <div style="background:var(--accent-bg);border-radius:var(--r);padding:10px 14px;font-size:11px;color:var(--accent-t)">
+        对标品类：<strong id="s3-bm-cat-label">全品类均值</strong> · benchmark 数据来自 Ptengine 跨品牌脱敏聚合
+      </div>
+      <div style="display:grid;gap:5px;margin-top:8px" id="s3-bm-tab-rows"></div>
+    </div>
+
+    <!-- Main table -->
+    <div id="lp-rows-my"></div>
+
+    <!-- Funnel cards: Top1 / Top2 / Top3 -->
+    <div style="margin-top:20px">
+      <div style="font-size:12px;font-weight:600;color:var(--t);margin-bottom:10px">漏水桶 · Top 1 / 2 / 3 落地页</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px" id="funnel-cards"></div>
+    </div>
+  </div>
+
+  <!-- Industry-only fallback table (no my data) — keep for reference -->
+  <div id="s3-industry-area">
+    <div style="font-size:11px;color:var(--t3);margin-bottom:8px">行业均值参考 · 接入数据后替换为你的真实页面</div>
+    <div style="display:grid;gap:5px">
+      <div class="lp-row hd"><div></div><div style="font-size:10px;color:var(--t3)">页面类型</div><div></div>
+        <div style="font-size:10px;color:var(--t3);text-align:right">CVR</div>
+        <div style="font-size:10px;color:var(--t3);text-align:right">跳出率</div>
+        <div style="font-size:10px;color:var(--t3);text-align:right">首屏流失</div>
+      </div>
+      <div id="lp-rows"></div>
+    </div>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- ④ 大促行为时序图 (was ⑤) -->
+<div class="section" id="s5">
+  <div class="sh">
+    <div class="sh-l"><div class="st">④ 大促行为时序图</div><div class="sm">日均流量趋势 · 三阶段划分 · CVR 叠加</div></div>
+    <button class="btn btn-sm" onclick="togglePhaseConfig()" id="btn-phase-cfg" style="font-size:11px">⚙ 配置阶段日期</button>
+  </div>
+
+  <!-- Phase date config panel -->
+  <div id="phase-config" style="display:none;background:var(--surface2);border-radius:var(--r);padding:14px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:600;color:var(--t);margin-bottom:10px">阶段日期窗口配置</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="width:10px;height:10px;border-radius:2px;background:#534ab7;display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:var(--t)">早鸟预热期</span>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <input class="field-in" id="ph1-start" type="date" value="2024-11-01" style="font-size:11px">
+          <span style="font-size:10px;color:var(--t3)">至</span>
+          <input class="field-in" id="ph1-end" type="date" value="2024-11-14" style="font-size:11px">
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="width:10px;height:10px;border-radius:2px;background:#d85a30;display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:var(--t)">正式活动期</span>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <input class="field-in" id="ph2-start" type="date" value="2024-11-15" style="font-size:11px">
+          <span style="font-size:10px;color:var(--t3)">至</span>
+          <input class="field-in" id="ph2-end" type="date" value="2024-11-29" style="font-size:11px">
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="width:10px;height:10px;border-radius:2px;background:#0f6e56;display:inline-block"></span>
+          <span style="font-size:11px;font-weight:600;color:var(--t)">限时返场期</span>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <input class="field-in" id="ph3-start" type="date" value="2024-11-30" style="font-size:11px">
+          <span style="font-size:10px;color:var(--t3)">至</span>
+          <input class="field-in" id="ph3-end" type="date" value="2024-12-03" style="font-size:11px">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="applyPhases()">应用</button>
+      <button class="btn btn-sm" onclick="resetPhases()">重置默认</button>
+    </div>
+  </div>
+
+  <!-- Phase badges (dynamic) -->
+  <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px" id="phase-badges"></div>
+
+  <!-- Chart -->
+  <div class="card" style="padding:14px">
+    <div class="cw" style="height:255px"><canvas id="timelineChart" role="img" aria-label="大促时序">大促时序趋势图</canvas></div>
+  </div>
+
+  <!-- Phase summary cards -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px" id="phase-summary"></div>
+</div>
+
+
+<div class="div"></div>
+
+<!-- ⑥ 客单价分层 -->
+<div class="section" id="s6">
+  <div class="sh">
+    <div class="sh-l"><div class="st">⑥ 客单价分层分析</div><div class="sm">不同价格带 CVR · 大促弹性</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      
+      <div class="tr"><button class="tb on" onclick="setAovMode('cvr')">CVR 对比</button><button class="tb" onclick="setAovMode('channel')">渠道偏好</button></div>
+    </div>
+  </div>
+  <!-- My data dimension selector for AOV -->
+  <div id="my-dim-s6" style="display:none">
+    <div class="dim-sel">
+      <span class="dim-sel-lbl">对标价格段：</span>
+      <div id="aov-dim-chips"></div>
+    </div>
+    <div id="cmp-rows-s6"></div>
+  </div>
+  <div id="aov-content"></div>
+  <div style="margin-top:14px"><div style="font-size:12px;font-weight:600;color:var(--t);margin-bottom:8px">大促 爆发弹性</div>
+    <div class="cw" style="height:175px"><canvas id="aovChart" role="img" aria-label="客单价CVR对比">客单价分层CVR</canvas></div>
+    <div style="margin-top:8px;display:flex;gap:12px">
+      <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#534ab7;display:inline-block"></span>大促</span>
+      <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#b4b2a9;display:inline-block"></span>平时</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">
+    <div class="ib g" style="margin-top:0"><div class="ib-t">黄金价格带 100–200 元</div><div class="ib-b">全场最高 CVR 1.38%，回访用户高达 2.13%。大促期优先倾斜流量资源。</div></div>
+    <div class="ib" style="margin-top:0"><div class="ib-t">心愿单效应 1001–2000 元</div><div class="ib-b">CVR 从 0.33% 近乎翻倍至 0.63%，"蓄水+爆发"策略效果最显著。</div></div>
+    <div class="ib w" style="margin-top:0"><div class="ib-t">理性区间 501–1000 元</div><div class="ib-b">大促前后 CVR 几乎持平，需要品牌故事和服务权益驱动而非纯价格。</div></div>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- ⑦ 品类 -->
+<div class="section" id="s7">
+  <div class="sh">
+    <div class="sh-l"><div class="st">⑦ 品类转化洞察</div><div class="sm">各品类大促表现 · 最佳承接落地页</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      
+      <div class="tr"><button class="tb on" onclick="setCatMode('cvr')">CVR 排行</button><button class="tb" onclick="setCatMode('lp')">最佳落地页</button></div>
+    </div>
+  </div>
+  <!-- My data dimension selector for category -->
+  <div id="my-dim-s7" style="display:none">
+    <div class="dim-sel">
+      <span class="dim-sel-lbl">对标品类：</span>
+      <div id="cat-dim-chips"></div>
+    </div>
+    <div id="cmp-rows-s7"></div>
+  </div>
+  <div id="cat-content"></div>
+
+</div>
+
+<div class="div"></div>
+
+<!-- ⑧ 地区 -->
+<div class="section" id="s8">
+  <div class="sh">
+    <div class="sh-l"><div class="st">⑧ 地区转化差异</div><div class="sm">北美 / 欧洲 / 其他 · 大促爆发弹性</div></div>
+    
+  </div>
+  <!-- My data dimension selector for region -->
+  <div id="my-dim-s8" style="display:none">
+    <div class="dim-sel">
+      <span class="dim-sel-lbl">对标地区：</span>
+      <span class="dim-chip sel" onclick="selRegion(0,this)">北美</span>
+      <span class="dim-chip" onclick="selRegion(1,this)">欧洲</span>
+      <span class="dim-chip" onclick="selRegion(2,this)">其他地区</span>
+    </div>
+    <div id="cmp-rows-s8"></div>
+  </div>
+  <div class="rg">
+    <div class="rc"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div class="rn">北美</div><span class="badge b-acc">成熟市场</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px"><div class="sc"><div class="sl">大促 CVR</div><div class="sv" style="font-size:15px">0.86%</div></div><div class="sc"><div class="sl">平时 CVR</div><div class="sv" style="font-size:15px;color:var(--t3)">0.67%</div></div></div>
+    <span class="badge b-acc" style="margin-bottom:8px">↑ +28%</span>
+    <div class="rbr"><div class="rbl">Email CVR</div><div class="rbb"><div class="rbf" style="width:52%;background:#d85a30"></div></div><div style="font-size:10px;color:var(--t2);font-family:DM Mono,monospace">2.62%</div></div>
+    <div class="rbr"><div class="rbl">直访 CVR</div><div class="rbb"><div class="rbf" style="width:31%;background:#378add"></div></div><div style="font-size:10px;color:var(--t2);font-family:DM Mono,monospace">1.57%</div></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.5">Email 2.62% CVR，VIP 抢先购 + 老客专属码效果最佳。</div></div>
+    <div class="rc" style="border-color:var(--teal);position:relative"><div style="position:absolute;top:-1px;right:12px;background:var(--teal);color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:0 0 6px 6px">最高爆发弹性</div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div class="rn">欧洲</div><span class="badge b-teal">惊喜市场</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px"><div class="sc"><div class="sl">大促 CVR</div><div class="sv" style="font-size:15px;color:var(--teal)">0.94%</div></div><div class="sc"><div class="sl">平时 CVR</div><div class="sv" style="font-size:15px;color:var(--t3)">0.55%</div></div></div>
+    <span class="badge b-teal" style="margin-bottom:8px">↑ +71%</span>
+    <div class="rbr"><div class="rbl">搜索 CVR</div><div class="rbb"><div class="rbf" style="width:34%;background:#0f6e56"></div></div><div style="font-size:10px;color:var(--t2);font-family:DM Mono,monospace">1.70%</div></div>
+    <div class="rbr"><div class="rbl">直访 CVR</div><div class="rbb"><div class="rbf" style="width:35%;background:#378add"></div></div><div style="font-size:10px;color:var(--t2);font-family:DM Mono,monospace">1.75%</div></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.5">搜索 CVR 1.70% 全球最高，提前布局 SEO/SEM 效果显著。</div></div>
+    <div class="rc"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div class="rn">其他地区</div><span class="badge b-amber">需观察</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px"><div class="sc"><div class="sl">大促 CVR</div><div class="sv" style="font-size:15px;color:var(--amber)">0.58%</div></div><div class="sc"><div class="sl">平时 CVR</div><div class="sv" style="font-size:15px;color:var(--t3)">0.61%</div></div></div>
+    <span class="badge b-amber" style="margin-bottom:8px">↓ -5%</span>
+    <div class="rbr"><div class="rbl">广告占比</div><div class="rbb"><div class="rbf" style="width:75%;background:#534ab7"></div></div><div style="font-size:10px;color:var(--t2);font-family:DM Mono,monospace">75.5%</div></div>
+    <div class="rbr"><div class="rbl">广告 CVR</div><div class="rbb"><div class="rbf" style="width:9%;background:#ba7517"></div></div><div style="font-size:10px;color:var(--t2);font-family:DM Mono,monospace">0.43%</div></div>
+    <div style="font-size:11px;color:var(--t3);margin-top:7px;line-height:1.5">广告依赖度最高但效率最低，严控 ROAS 阈值。</div></div>
+  </div>
+  <div style="margin-top:14px"><div style="font-size:12px;font-weight:600;color:var(--t);margin-bottom:8px">三大市场 · 大促 vs 平时</div><div class="cw" style="height:145px"><canvas id="regionChart" role="img" aria-label="地区爆发弹性">地区对比</canvas></div></div>
+</div>
+
+<div class="div"></div>
+
+<!-- ⑨ LP × AOV -->
+<div class="section" id="s9">
+  <div class="sh">
+    <div class="sh-l"><div class="st">⑨ 落地页 × 客单价交叉</div><div class="sm">不同价格带落地页 CVR / 跳出率 / 首屏流失</div></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      
+      <div class="tr"><button class="tb on" onclick="setLPAovMode('cvr')">CVR</button><button class="tb" onclick="setLPAovMode('bounce')">跳出率</button><button class="tb" onclick="setLPAovMode('above')">首屏流失</button></div>
+    </div>
+  </div>
+  <div id="my-dim-s9" style="display:none">
+    <div class="dim-sel">
+      <span class="dim-sel-lbl">对标价格段：</span>
+      <div id="lpaov-dim-chips"></div>
+    </div>
+    <div id="cmp-rows-s9"></div>
+  </div>
+  <div id="lpaov-content"></div>
+  <div style="margin-top:12px"><div class="cw" style="height:190px"><canvas id="lpaovChart" role="img" aria-label="落地页客单价交叉">落地页客单价交叉图</canvas></div>
+    <div style="margin-top:8px;display:flex;gap:12px">
+      <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#534ab7;display:inline-block"></span>Top 1</span>
+      <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#0f6e56;display:inline-block"></span>Top 2</span>
+      <span style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:2px;background:#d85a30;display:inline-block"></span>Top 3</span>
+    </div>
+  </div>
+</div>
+
+<div class="div"></div>
+
+
+<div style="border-top:1px solid var(--border);margin-top:20px;padding-top:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <div style="font-size:11px;color:var(--t3)">Ptengine · 大促行为洞察看板 · 行业脱敏聚合数据</div>
+  <div style="font-size:11px;color:var(--t3)">行业基准仅供参考，实际数据以客户自身账户为准</div>
+</div>
+
+</main>
+</div>
+
+<script>
+const D=window.matchMedia('(prefers-color-scheme:dark)').matches;
+const TC=D?'#9c9a92':'#5c5a54';
+const GC=D?'rgba(255,255,255,.06)':'rgba(0,0,0,.06)';
+
+function goTo(id,btn){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+function setTb(id,i){document.querySelectorAll('#'+id+' .tb').forEach((b,j)=>b.classList.toggle('on',j===i));}
+function switchMyTab(t){
+  document.getElementById('mytab-manual').style.display=t==='manual'?'block':'none';
+  document.getElementById('mytab-api').style.display=t==='api'?'block':'none';
+  document.getElementById('btn-manual-tab').style.fontWeight=t==='manual'?'600':'400';
+  document.getElementById('btn-api-tab').style.fontWeight=t==='api'?'600':'400';
+}
+
+/* ── My data store ── */
+let MY={};
+const IND={
+  cvr:0.86, new_cvr:0.57, ret_cvr:1.43, new_pct:65.8,
+  ads_cvr:0.60, email_cvr:2.20, direct_cvr:1.60, search_cvr:1.54, social_cvr:0.49,
+  lp_cvr:0.53, bounce:70.04, above:47.6,
+  aov_cvr:[1.02,1.38,1.14,0.42,0.63,0.34],
+  cat_cvr:{快时尚:3.23,智能硬件:2.47,母婴:2.14,移动储能:1.23,户外机器人:1.07,户外:0.44,出行:0.21,家居家具:0.15,'3D打印机':0.06},
+  region_cvr:[0.86,0.94,0.58],
+  region_email:[2.62,1.61,2.70],
+  region_direct:[1.57,1.75,1.17],
+  region_search:[1.41,1.70,1.47],
+};
+const AOV_LABELS=['0–100','100–200','201–500','501–1000','1001–2000','2001+'];
+const REGION_LABELS=['北美','欧洲','其他地区'];
+const CAT_NAMES=['母婴','储能','智能科技','假发','户外装备','鞋服','消费电子/数码配件','箱包','Ebike','家居硬件','电动滑板车','汽车配件','软件控制器'];
+
+function applyMyData(){
+  const get=id=>{const v=document.getElementById(id)?.value;return(v===''||v===undefined)?null:+v;};
+  const getStr=id=>document.getElementById(id)?.value||'';
+  MY={
+    cvr:get('my-cvr'), new_cvr:get('my-new-cvr'), ret_cvr:get('my-ret-cvr'), new_pct:get('my-new-pct'),
+    ads_cvr:get('my-ads-cvr'), email_cvr:get('my-email-cvr'), direct_cvr:get('my-direct-cvr'), search_cvr:get('my-search-cvr'),
+    lp_cvr:get('my-lp-cvr'), bounce:get('my-bounce'), above:get('my-above'),
+    aov_idx:get('my-aov-seg'), cat_name:getStr('my-cat-seg'), region_idx:get('my-region-seg'),
+    norm_cvr:null, category:'',
+  };
+  const hasAny=Object.values(MY).some(v=>v!==null&&v!=='');
+  if(!hasAny){showSt('st-manual','err','请至少填入一项数据');return;}
+  showSt('st-manual','ok','✓ 数据已加载！每个模块右上角出现"我的对比"按钮，点击即可展开对比视图。');
+  document.getElementById('my-data-badge').style.display='inline-flex';
+  document.getElementById('btn-clear').style.display='inline-block';
+  // Show KPI card
+  if(MY.cvr!==null){
+    const _mkc=document.getElementById('my-kpi-card');if(_mkc)_mkc.style.display='block';
+    {const _e=document.getElementById('my-kpi-val');if(_e)_e.textContent=MY.cvr.toFixed(2)+'%';}
+    const d=MY.cvr-IND.cvr;
+    {const _e=document.getElementById('my-kpi-delta');if(_e)_e.textContent=(d>=0?'↑ +':'↓ ')+Math.abs(d).toFixed(2)+'pp vs 行业';}
+  }
+  // Show toggle buttons for sections that have data
+  showToggles();
+  // Build dimension chips
+  buildDimChips();
+  // Update overview chart
+  updateOverviewChart();
+}
+
+function showToggles(){
+  const map={
+    's1':['cvr','new_cvr','ret_cvr'],
+    's2':['ads_cvr','email_cvr','direct_cvr','search_cvr'],
+    's3':['lp_cvr','bounce','above'],
+    's6':['cvr'],
+    's7':['cvr'],
+    's8':['cvr'],
+    's9':['lp_cvr','bounce','above'],
+  };
+  Object.entries(map).forEach(([sec,keys])=>{
+    const hasData=keys.some(k=>MY[k]!==null&&MY[k]!==undefined&&MY[k]!=='');
+    const btn=document.getElementById('my-tog-'+sec);
+    if(btn)btn.style.display=hasData?'inline-flex':'none';
+  });
+}
+
+function buildDimChips(){
+  // AOV chips
+  const aovEl=document.getElementById('aov-dim-chips');
+  if(aovEl){
+    let html='';
+    AOV_LABELS.forEach((l,i)=>{
+      const isSel=(MY.aov_idx!==null&&MY.aov_idx!==''&&+MY.aov_idx===i)||
+                  (MY.aov_idx===null&&i===1);
+      html+=`<span class="dim-chip ${isSel?'sel':''}" onclick="selAov(${i},this)">${l}</span>`;
+    });
+    aovEl.innerHTML=html;
+  }
+  // Cat chips
+  const catEl=document.getElementById('cat-dim-chips');
+  if(catEl){
+    let html='';
+    CAT_NAMES.forEach(n=>{
+      const isSel=MY.cat_name===n;
+      html+=`<span class="dim-chip ${isSel?'sel':''}" onclick="selCat('${n}',this)">${n}</span>`;
+    });
+    catEl.innerHTML=html;
+  }
+  // LPAOV chips
+  const lpaovEl=document.getElementById('lpaov-dim-chips');
+  if(lpaovEl){
+    let html='';
+    AOV_LABELS.forEach((l,i)=>{
+      const isSel=(MY.aov_idx!==null&&MY.aov_idx!==''&&+MY.aov_idx===i)||
+                  (MY.aov_idx===null&&i===1);
+      html+=`<span class="dim-chip ${isSel?'sel':''}" onclick="selLpAov(${i},this)">${l}</span>`;
+    });
+    lpaovEl.innerHTML=html;
+  }
+}
+
+let selAovIdx=1, selCatName='', selRegionIdx=0, selLpAovIdx=1;
+function selAov(i,el){selAovIdx=i;document.querySelectorAll('#aov-dim-chips .dim-chip').forEach((c,j)=>c.classList.toggle('sel',j===i));renderCmpS6();}
+function selCat(n,el){selCatName=n;document.querySelectorAll('#cat-dim-chips .dim-chip').forEach(c=>c.classList.toggle('sel',c.textContent===n));renderCmpS7();}
+function selRegion(i,el){selRegionIdx=i;document.querySelectorAll('#my-dim-s8 .dim-chip').forEach((c,j)=>c.classList.toggle('sel',j===i));renderCmpS8();}
+function selLpAov(i,el){selLpAovIdx=i;document.querySelectorAll('#lpaov-dim-chips .dim-chip').forEach((c,j)=>c.classList.toggle('sel',j===i));renderCmpS9();}
+
+/* ── toggle per-section comparison ── */
+let openSecs=new Set();
+function toggleMyCmp(sec){
+  const btn=document.getElementById('my-tog-'+sec);
+  const panel=document.getElementById('my-cmp-'+sec);
+  const dimPanel=document.getElementById('my-dim-'+sec);
+  const isOpen=openSecs.has(sec);
+  if(isOpen){
+    openSecs.delete(sec);
+    if(panel)panel.style.display='none';
+    if(dimPanel)dimPanel.style.display='none';
+    if(btn)btn.classList.remove('active');
+  } else {
+    openSecs.add(sec);
+    if(panel)panel.style.display='block';
+    if(dimPanel)dimPanel.style.display='block';
+    if(btn)btn.classList.add('active');
+    // render relevant comparison
+    const renderMap={s1:renderCmpS1,s2:renderCmpS2,s3:renderCmpS3,s6:renderCmpS6,s7:renderCmpS7,s8:renderCmpS8,s9:renderCmpS9};
+    if(renderMap[sec])renderMap[sec]();
+  }
+}
+
+/* ── comparison row builder ── */
+function mkCmpRows(containerId, rows){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  let html='<div style="display:grid;gap:5px">';
+  rows.forEach((r,i)=>{
+    if(r.my===null||r.my===undefined||r.my==='')return;
+    const maxV=Math.max(r.my,r.ind)*1.15;
+    const d=r.dir==='down'?(r.ind-r.my):(r.my-r.ind);
+    const pct=(d/r.ind*100);
+    const pos=d>=0;
+    const dcls=Math.abs(pct)<2?'dp-neu':pos?'dp-pos':'dp-neg';
+    html+=`<div class="cmp-row ${i%2===1?'even':''}" style="grid-template-columns:120px 1fr 1fr 54px">
+      <div class="cmp-label">${r.label}</div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar-fill" style="width:${r.my/maxV*100}%;background:var(--accent)"></div></div>
+        <span class="cmp-val my">${r.my.toFixed(2)}%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <div class="cmp-bar-bg" style="flex:1"><div class="cmp-bar-fill" style="width:${r.ind/maxV*100}%;background:var(--t3)"></div></div>
+        <span class="cmp-val ind">${r.ind.toFixed(2)}%</span>
+      </div>
+      <span class="delta-pill ${dcls}">${pos?'+':''}${pct.toFixed(1)}%</span>
+    </div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function renderCmpS1(){mkCmpRows('cmp-rows-s1',[
+  {label:'整体 CVR',my:MY.cvr,ind:IND.cvr,dir:'up'},
+  {label:'新用户 CVR',my:MY.new_cvr,ind:IND.new_cvr,dir:'up'},
+  {label:'回访用户 CVR',my:MY.ret_cvr,ind:IND.ret_cvr,dir:'up'},
+]);}
+function renderCmpS2(){mkCmpRows('cmp-rows-s2',[
+  {label:'广告 CVR',my:MY.ads_cvr,ind:IND.ads_cvr,dir:'up'},
+  {label:'Email CVR',my:MY.email_cvr,ind:IND.email_cvr,dir:'up'},
+  {label:'直访 CVR',my:MY.direct_cvr,ind:IND.direct_cvr,dir:'up'},
+  {label:'搜索 CVR',my:MY.search_cvr,ind:IND.search_cvr,dir:'up'},
+]);}
+function renderCmpS3(){mkCmpRows('cmp-rows-s3',[
+  {label:'Top1 LP CVR',my:MY.lp_cvr,ind:IND.lp_cvr,dir:'up'},
+  {label:'跳出率',my:MY.bounce,ind:IND.bounce,dir:'down'},
+  {label:'首屏流失率',my:MY.above,ind:IND.above,dir:'down'},
+]);}
+function renderCmpS4(){mkCmpRows('cmp-rows-s4',[
+  {label:'整体 CVR',my:MY.cvr,ind:IND.cvr,dir:'up'},
+  {label:'新用户 CVR',my:MY.new_cvr,ind:IND.new_cvr,dir:'up'},
+  {label:'回访用户 CVR',my:MY.ret_cvr,ind:IND.ret_cvr,dir:'up'},
+]);}
+function renderCmpS6(){
+  const idx=selAovIdx;
+  const indCvr=IND.aov_cvr[idx];
+  const lbl=AOV_LABELS[idx];
+  mkCmpCards('cmp-rows-s6',[
+    {label:'我的整体 CVR',my:MY.cvr,ind:IND.cvr,indLbl:'全品类均值',dir:'up'},
+    {label:`行业 ${lbl} 价格带 CVR`,my:null,ind:indCvr,indLbl:'行业均值',dir:'up',showIndOnly:true},
+    {label:'我的广告 CVR',my:MY.ads_cvr,ind:IND.ads_cvr,indLbl:'行业均值',dir:'up'},
+  ]);
+}
+function renderCmpS7(){
+  const n=selCatName||CAT_NAMES[0];
+  const catD=CAT_DETAIL[n]||CAT_DETAIL['全品类'];
+  const indCvr=catD?catD.cvr:0;
+  if(!indCvr||indCvr===0){
+    const el=document.getElementById('cmp-rows-s7');
+    if(el)el.innerHTML='<div style="font-size:11px;color:var(--t3);padding:8px">该品类暂无数据</div>';
+    return;
+  }
+  mkCmpCards('cmp-rows-s7',[
+    {label:'我的整体 CVR',my:MY.cvr,ind:indCvr,indLbl:n+' 品类均值',dir:'up'},
+    {label:'新访 CVR',my:MY.new_cvr,ind:catD.new_cvr,indLbl:n+' 均值',dir:'up'},
+    {label:'回访 CVR',my:MY.ret_cvr,ind:catD.ret_cvr,indLbl:n+' 均值',dir:'up'},
+  ]);
+}
+function renderCmpS8(){
+  const i=selRegionIdx;
+  mkCmpCards('cmp-rows-s8',[
+    {label:`CVR（${REGION_LABELS[i]}）`,my:MY.cvr,ind:IND.region_cvr[i],indLbl:'行业均值',dir:'up'},
+    {label:'Email CVR',my:MY.email_cvr,ind:IND.region_email[i],indLbl:'行业均值',dir:'up'},
+    {label:'直访 CVR',my:MY.direct_cvr,ind:IND.region_direct[i],indLbl:'行业均值',dir:'up'},
+    {label:'搜索 CVR',my:MY.search_cvr,ind:IND.region_search[i],indLbl:'行业均值',dir:'up'},
+  ]);
+}
+const LPAOV={labels:['0–100','100–200','200–500','500–1000','1000–2000','2001–5000'],top1_cvr:[0.68,1.04,0.58,0.18,0.29,0.24],top1_bounce:[65.07,74.41,76.87,81.57,69.10,71.52],top1_above:[51.19,40.82,48.02,33.37,38.60,57.78]};
+function renderCmpS9(){
+  const i=selLpAovIdx;
+  const m=document.querySelector('#tg9 .tb.on')?.textContent||'CVR';
+  const key=m.includes('CVR')?'cvr':m.includes('跳')?'bounce':'above';
+  const myVal=key==='cvr'?MY.lp_cvr:key==='bounce'?MY.bounce:MY.above;
+  mkCmpCards('cmp-rows-s9',[
+    {label:`Top1 落地页 ${m}`,my:myVal,ind:LPAOV['top1_'+key][i],indLbl:LPAOV.labels[i]+' 行业均值',dir:key==='cvr'?'up':'down'},
+  ]);
+}
+
+// 清晰对比卡片（替代进度条）
+function mkCmpCards(containerId, rows){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:6px">'
+    +rows.map(r=>{
+      const hasMyVal=r.my!==null&&r.my!==undefined&&!r.showIndOnly;
+      const d=hasMyVal?(r.dir==='down'?(r.ind-r.my):(r.my-r.ind)):null;
+      const pct=d!==null&&r.ind>0?(d/r.ind*100):null;
+      const pos=d!==null&&d>=0;
+      const myColor=!hasMyVal?'var(--t3)':pos?'var(--teal)':'var(--coral)';
+      return '<div style="background:var(--surface2);border-radius:var(--r);padding:10px 12px">'
+        +'<div style="font-size:10px;color:var(--t3);margin-bottom:6px">'+r.label+'</div>'
+        +'<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:6px">'
+          +'<div>'
+            +(hasMyVal
+              ?'<div style="font-size:18px;font-weight:600;font-family:DM Mono,monospace;color:'+myColor+'">'+r.my.toFixed(2)+'%</div>'
+                +'<div style="font-size:10px;color:var(--t3);margin-top:1px">我的</div>'
+              :'<div style="font-size:18px;font-weight:600;font-family:DM Mono,monospace;color:var(--t)">'+r.ind.toFixed(2)+'%</div>'
+                +'<div style="font-size:10px;color:var(--t3);margin-top:1px">'+(r.indLbl||'行业均值')+'</div>'
+            )
+          +'</div>'
+          +(hasMyVal?'<div style="text-align:right">'
+            +'<div style="font-size:13px;font-family:DM Mono,monospace;color:var(--t2)">'+r.ind.toFixed(2)+'%</div>'
+            +'<div style="font-size:10px;color:var(--t3);margin-top:1px">'+(r.indLbl||'行业均值')+'</div>'
+            +(pct!==null?'<div style="margin-top:4px"><span style="font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;background:'+(pos?'var(--teal-bg)':'var(--coral-bg)')+';color:'+(pos?'var(--teal-t)':'var(--coral-t)')+';">'+(pos?'▲':'▼')+Math.abs(pct).toFixed(1)+'%</span></div>':'')
+          +'</div>':'')
+        +'</div>'
+      +'</div>';
+    }).join('')
+  +'</div>';
+}
+
+/* ── overview chart — 我的大促 vs 行业大促 vs 品类大促 ── */
+let ovChartRef=null;
+let s1View='industry'; // kept for compat
+
+const CAT_BFCM_CVR={母婴:2.14,储能:1.23,智能科技:2.47,假发:1.85,户外装备:0.44,鞋服:3.23,'消费电子/数码配件':1.07,箱包:0.92,Ebike:0.68,家居硬件:0.15,电动滑板车:0.58,汽车配件:0.35,软件控制器:0.21};
+
+// 品类详细数据：大促 + 平时（norm_*）
+const CAT_DETAIL={
+  '母婴':      {cvr:2.14,new_cvr:1.31,ret_cvr:3.52,ads_cvr:1.68,burst:1.85, norm_cvr:1.31,norm_new:0.82,norm_ret:2.18,norm_ads:1.02,norm_burst:1.00},
+  '储能':      {cvr:1.23,new_cvr:0.72,ret_cvr:2.10,ads_cvr:0.95,burst:2.10, norm_cvr:0.52,norm_new:0.31,norm_ret:0.90,norm_ads:0.40,norm_burst:1.00},
+  '智能科技':  {cvr:2.47,new_cvr:1.42,ret_cvr:3.89,ads_cvr:1.82,burst:1.95, norm_cvr:1.42,norm_new:0.88,norm_ret:2.41,norm_ads:1.10,norm_burst:1.00},
+  '假发':      {cvr:1.85,new_cvr:1.10,ret_cvr:3.12,ads_cvr:1.40,burst:1.78, norm_cvr:1.05,norm_new:0.64,norm_ret:1.82,norm_ads:0.82,norm_burst:1.00},
+  '户外装备':  {cvr:0.44,new_cvr:0.28,ret_cvr:0.82,ads_cvr:0.32,burst:1.65, norm_cvr:0.28,norm_new:0.18,norm_ret:0.52,norm_ads:0.20,norm_burst:1.00},
+  '鞋服':      {cvr:3.23,new_cvr:1.80,ret_cvr:5.10,ads_cvr:2.45,burst:2.20, norm_cvr:1.80,norm_new:1.10,norm_ret:3.15,norm_ads:1.48,norm_burst:1.00},
+  '消费电子/数码配件':{cvr:1.07,new_cvr:0.65,ret_cvr:1.88,ads_cvr:0.82,burst:1.90, norm_cvr:0.44,norm_new:0.27,norm_ret:0.78,norm_ads:0.34,norm_burst:1.00},
+  '箱包':      {cvr:0.92,new_cvr:0.56,ret_cvr:1.61,ads_cvr:0.70,burst:1.72, norm_cvr:0.58,norm_new:0.36,norm_ret:1.02,norm_ads:0.44,norm_burst:1.00},
+  'Ebike':     {cvr:0.68,new_cvr:0.41,ret_cvr:1.22,ads_cvr:0.51,burst:1.58, norm_cvr:0.38,norm_new:0.23,norm_ret:0.68,norm_ads:0.28,norm_burst:1.00},
+  '家居硬件':  {cvr:0.15,new_cvr:0.09,ret_cvr:0.28,ads_cvr:0.11,burst:1.45, norm_cvr:0.12,norm_new:0.07,norm_ret:0.22,norm_ads:0.09,norm_burst:1.00},
+  '电动滑板车':{cvr:0.58,new_cvr:0.35,ret_cvr:1.05,ads_cvr:0.44,burst:1.62, norm_cvr:0.32,norm_new:0.20,norm_ret:0.58,norm_ads:0.24,norm_burst:1.00},
+  '汽车配件':  {cvr:0.35,new_cvr:0.21,ret_cvr:0.63,ads_cvr:0.27,burst:1.52, norm_cvr:0.22,norm_new:0.14,norm_ret:0.40,norm_ads:0.17,norm_burst:1.00},
+  '软件控制器':{cvr:0.21,new_cvr:0.13,ret_cvr:0.38,ads_cvr:0.16,burst:1.48, norm_cvr:0.18,norm_new:0.11,norm_ret:0.32,norm_ads:0.13,norm_burst:1.00},
+  '全品类':    {cvr:0.86,new_cvr:0.57,ret_cvr:1.43,ads_cvr:0.60,burst:1.73, norm_cvr:0.62,norm_new:0.44,norm_ret:0.98,norm_ads:0.48,norm_burst:1.00},
+};
+
+function updateCatKpiBar(catName){
+  const cat = catName || '全品类';
+  const d = CAT_DETAIL[cat] || CAT_DETAIL['全品类'];
+  const label = cat === '全品类' ? '全品类' : cat;
+
+  // 更新所有品类名称 span
+  document.querySelectorAll('.cat-kpi-n').forEach(el=>el.textContent=label);
+  const nameEl=document.getElementById('cat-kpi-name');
+  if(nameEl)nameEl.textContent=label;
+  const rowLabel=document.getElementById('cat-row-label');
+  if(rowLabel)rowLabel.textContent=(cat==='全品类'?'全品类均值':cat+' 品类均值');
+
+  const set=(id,val,delta)=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=val;
+    const de=document.getElementById(id+'-d');
+    if(de){de.textContent=delta;de.className='sd up';}
+  };
+
+  set('cat-kpi-burst', d.burst.toFixed(2)+'×',    `↑ vs 平时 ${d.norm_burst.toFixed(2)}×`);
+  set('cat-kpi-cvr',   d.cvr.toFixed(2)+'%',      `↑ vs 平时 ${d.norm_cvr.toFixed(2)}%`);
+  set('cat-kpi-new',   d.new_cvr.toFixed(2)+'%',  `↑ vs 平时 ${d.norm_new.toFixed(2)}%`);
+  set('cat-kpi-ret',   d.ret_cvr.toFixed(2)+'%',  `↑ vs 平时 ${d.norm_ret.toFixed(2)}%`);
+  set('cat-kpi-ads',   d.ads_cvr.toFixed(2)+'%',  `↑ vs 平时 ${d.norm_ads.toFixed(2)}%`);
+}
+const IND_BFCM_CVR=0.86, IND_NORM_CVR=0.62;
+
+function initOverview(){
+  const ctx=document.getElementById('overviewChart').getContext('2d');
+  const cat=MY.category||'全品类';
+  const catD=CAT_DETAIL[cat]||CAT_DETAIL['全品类'];
+  // 接入数据前：我的大促用行业均值占位（半透明虚线样式）
+  const myData=[null,null,null]; // 接入前为空
+  ovChartRef=new Chart(ctx,{type:'bar',data:{
+    labels:['整体 CVR','新用户 CVR','回访用户 CVR'],
+    datasets:[
+      {label:'我的大促',   data:myData,       backgroundColor:'#2b4fff',   borderRadius:4, borderWidth:0},
+      {label:'行业大促',   data:[0.86,0.57,1.43], backgroundColor:'#534ab7aa', borderRadius:4},
+      {label:'品类大促',   data:[catD.cvr,catD.new_cvr,catD.ret_cvr], backgroundColor:'#0f6e5699', borderRadius:4},
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{
+        label:c=>`${c.dataset.label}: ${c.raw!==null&&c.raw!==undefined?c.raw.toFixed(2)+'%':'未接入'}`
+      }}
+    },
+    scales:{
+      x:{grid:{color:GC},ticks:{color:TC,font:{size:11}}},
+      y:{grid:{color:GC},ticks:{color:TC,font:{size:9},callback:v=>v.toFixed(2)+'%'},min:0}
+    }
+  }});
+}
+
+function setS1View(v){}
+function refreshS1Chart(){}
+
+function updateOverviewChart(){
+  if(!ovChartRef)return;
+  try{
+  const hasMy=MY.cvr!==null;
+  const cat=MY.category||'全品类';
+  const catD=CAT_DETAIL[cat]||CAT_DETAIL['全品类'];
+
+  // 更新三组数据
+  ovChartRef.data.datasets[0].data = hasMy
+    ? [MY.cvr, MY.new_cvr||null, MY.ret_cvr||null]
+    : [null, null, null];
+  ovChartRef.data.datasets[2].data = [catD.cvr, catD.new_cvr, catD.ret_cvr];
+
+  // Y轴自动范围
+  const allVals=[0.86,0.57,1.43, catD.cvr,catD.new_cvr,catD.ret_cvr,
+    ...(hasMy?[MY.cvr||0,MY.new_cvr||0,MY.ret_cvr||0]:[])].filter(v=>v!==null);
+  ovChartRef.options.scales.y.max=Math.max(...allVals)*1.25;
+
+  ovChartRef.update();
+
+  // 更新品类图例文字
+  const leg2=document.getElementById('leg2');
+  if(leg2)leg2.textContent=cat==='全品类'?'全品类':cat;
+
+  // 显示/隐藏接入提示
+  const hint=document.getElementById('s1-my-hint-chart');
+  if(hint)hint.style.display=hasMy?'none':'flex';
+
+  // compat
+  document.getElementById('s1-btn-norm')?.style && (document.getElementById('s1-btn-norm').style.display=hasMy?'block':'none');
+  document.getElementById('s1-btn-cat')?.style && (document.getElementById('s1-btn-cat').style.display=hasMy?'block':'none');
+  }catch(e){console.error('[updateOverviewChart]',e);}
+}
+
+function clearMyData(){
+  MY={norm_cvr:null,category:'',urlParsed:null};openSecs.clear();s1View='industry';
+  document.getElementById('my-data-badge').style.display='none';
+  const _mkc=document.getElementById('my-kpi-card');if(_mkc)_mkc.style.display='none';
+  document.getElementById('btn-clear').style.display='none';
+  ['s1','s2','s3','s6','s7','s8','s9'].forEach(s=>{
+    const t=document.getElementById('my-tog-'+s);if(t)t.style.display='none';
+    const p=document.getElementById('my-cmp-'+s);if(p)p.style.display='none';
+    const d=document.getElementById('my-dim-'+s);if(d)d.style.display='none';
+    const btn=document.getElementById('my-tog-'+s);if(btn)btn.classList.remove('active');
+  });
+  if(ovChartRef&&ovChartRef.data.datasets.length>2){ovChartRef.data.datasets.splice(2,1);ovChartRef.update();}
+  const _nd=document.getElementById('s3-no-data'); if(_nd)_nd.style.display='block';
+  const _da=document.getElementById('s3-data-area'); if(_da)_da.style.display='none';
+  const _ia=document.getElementById('s3-industry-area'); if(_ia)_ia.style.display='block';
+  const b1=document.getElementById('s1-btn-norm');if(b1)b1.style.display='none';
+  const b2=document.getElementById('s1-btn-cat');if(b2)b2.style.display='none';
+  const hint=document.getElementById('s1-my-hint');if(hint)hint.style.display='flex';
+  const mk=document.getElementById('my-s1-kpis');if(mk)mk.style.display='none';
+  setS1View('industry');
+  ['my-cvr','my-new-cvr','my-ret-cvr','my-new-pct','my-ads-cvr','my-email-cvr','my-direct-cvr','my-search-cvr','my-lp-cvr','my-bounce','my-above'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('my-aov-seg').value='';document.getElementById('my-cat-seg').value='';document.getElementById('my-region-seg').value='';
+  showSt('st-manual','ok','已清除所有我的数据');
+}
+
+function showSt(id,cls,msg){const el=document.getElementById(id);if(!el)return;el.className='status '+cls;el.textContent=msg;}
+function setBadge(state,txt){const b=document.getElementById('api-badge');if(b){b.className='api-status '+state;b.innerHTML=`<span class="api-pulse"></span>${txt||{connected:'已连接',idle:'未连接',error:'连接错误'}[state]||state}`;}}
+
+/* ══════════════════════════════════════════════
+   Ptengine Open API 直连实现
+   Base: https://xbackend.ptengine.com/
+   Auth: x-api-key header
+   ══════════════════════════════════════════════ */
+
+function ptGetCreds(){
+  const key=(document.getElementById('pt-apikey')?.value||'').trim();
+  const pid=(document.getElementById('pt-profileid')?.value||'').trim();
+  const start=(document.getElementById('pt-start')?.value||'2024-11-01');
+  const end=(document.getElementById('pt-end')?.value||'2024-11-30');
+  const normStart=(document.getElementById('pt-norm-start')?.value||'2024-08-01');
+  const normEnd=(document.getElementById('pt-norm-end')?.value||'2024-10-31');
+  const conv=(document.getElementById('pt-conversion')?.value||'').trim();
+  const category=(document.getElementById('pt-category')?.value||'');
+  const urls=[0,1,2,3,4].map(i=>(document.getElementById('pt-url-'+i)?.value||'').trim()).filter(u=>u);
+  const url=urls[0]||'';
+  return{key,pid,url,urls,start,end,normStart,normEnd,conv,category};
+}
+
+
+const PT_BASE='https://xbackend.ptengine.com';
+
+// Detect preview/sandbox (Claude artifact, localhost, etc.)
+const IS_PREVIEW=(()=>{try{const h=location.hostname;return h===''||h==='localhost'||h.endsWith('.claude.ai')||h.endsWith('.anthropic.com');}catch(e){return true;}})();
+
+function ptHeaders(key){return{'Content-Type':'application/json','x-api-key':key};}
+
+/* Generic POST — auto-mock in preview/sandbox environments */
+async function ptPost(key,path,body){
+  if(IS_PREVIEW) return ptMock(path,body);
+  const r=await fetch(PT_BASE+path,{method:'POST',headers:ptHeaders(key),body:JSON.stringify(body)});
+  if(!r.ok){const t=await r.text();throw new Error(`HTTP ${r.status}: ${t.slice(0,200)}`);}
+  const d=await r.json();
+  // API returns {code, data} envelope OR direct data
+  if(d.code!==undefined&&d.code!==200&&d.code!==0){
+    throw new Error(`API ${d.code}: ${d.message||d.msg||JSON.stringify(d).slice(0,120)}`);
+  }
+  // Return .data if envelope, otherwise return whole response
+  return d.data!==undefined ? d.data : d;
+}
+
+/* Mock data for preview */
+function ptMock(path,body){
+  const qt=body.queryType||'',fn=body.funName||'';
+  const hasConv=(body.conversionNames||[]).length>0;
+  const rCvr=()=>+(Math.random()*1.2+0.5).toFixed(2);
+  const rPct=()=>+(Math.random()*20+45).toFixed(1);
+  if(qt==='page_metrics'){
+    const m={visits:{value:'12,450'},uv:{value:'9,830'},bounceRate:{value:rPct()+'%'},fvRate:{value:rPct()+'%'},newVisitsRate:{value:(rPct()+10)+'%'}};
+    const base={metrics:m};
+    if(hasConv)base.conversions=[{conversionName:body.conversionNames[0],conversionRate:{value:rCvr()+'%'},conversions:{value:''+Math.floor(Math.random()*200+50)}}];
+    return base;
+  }
+  if(qt==='page_insight'&&fn==='sourceType'){
+    return{insights:['Campaign','Search','Direct','Social','Referral'].map(n=>({name:n,metrics:{visits:{value:''+Math.floor(Math.random()*3000+100)}},conversions:hasConv?[{conversionName:body.conversionNames[0],conversionRate:{value:rCvr()+'%'}}]:[]}))};
+  }
+  if(qt==='page_insight'&&fn==='visitType'){
+    return{insights:['New visits','Returning visits'].map(n=>({name:n,metrics:{visits:{value:''+Math.floor(Math.random()*5000+500)}},conversions:hasConv?[{conversionName:body.conversionNames[0],conversionRate:{value:rCvr()+'%'}}]:[]}))};
+  }
+  if(path.includes('event/query')){
+    // dimensions: ['eventName','visitType'] — rows 每行有 eventName + visitType
+    const conv_name=(body.filters||[]).find(f=>f.name==='eventName')?.value?.[0]||'purchase';
+    return{rows:[
+      {eventName:conv_name,visitType:'New visits',
+       eventCount:''+Math.floor(Math.random()*200+50),sessions:''+Math.floor(Math.random()*4000+1000)},
+      {eventName:conv_name,visitType:'Returning visits',
+       eventCount:''+Math.floor(Math.random()*300+80),sessions:''+Math.floor(Math.random()*2000+500)},
+    ]};
+  }
+  if(path.includes('datacenter')){
+    return{metrics:{bounceRate:{value:rPct()+'%'},newVisitsRate:{value:(rPct()+5)+'%'},conversionRate:{value:rCvr()+'%'},visits:{value:'48,200'}}};
+  }
+  if(path.includes('conversion')){
+    if(qt==='regular')return{rows:[{conversionName:'购买完成',conversions:'324',conversionRate:'1.24%'},{conversionName:'加入购物车',conversions:'1205',conversionRate:'4.61%'},{conversionName:'注册会员',conversions:'89',conversionRate:'0.34%'}]};
+    return{metrics:{conversions:{value:'413'},conversionRate:{value:'1.58%'},conversionValue:{value:'74340'}}};
+  }
+  return{};
+}
+
+/* Parse a percentage/decimal string from Ptengine response like "2.22%" or "45.23%" */
+function ptParsePct(val){
+  if(val===null||val===undefined)return null;
+  const s=String(val).replace('%','').trim();
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+/* Test connection: simple page_metrics with minimal metrics */
+async function ptTestConn(idx=0){
+  const{key,pid,urls,start,end}=ptGetCreds();
+  const testUrl=urls[idx]||'';
+  if(!key||!pid||!testUrl){showSt('st-api','err','请先填写 API Key、Profile ID 和至少一个页面 URL');return;}
+  const btn=document.getElementById('btn-pt-test');
+  if(btn){btn.disabled=true;btn.textContent='测试中...';}
+  showSt('st-api','ok','正在连接 Ptengine API...');
+  try{
+    await ptPost(key,'/open-api/v1/heatmap/query',{
+      queryType:'page_metrics',profileId:pid,url:testUrl,startDate:start,endDate:end,
+      deviceType:'ALL',metrics:['pv'],lang:'ZH'
+    });
+    setBadge('connected','已连接');
+    showSt('st-api','ok','✓ 连接成功！URL '+(idx+1)+' 可正常访问，点击"拉取数据并生成对比"获取全部指标。');
+  }catch(e){
+    setBadge('error');
+    showSt('st-api','err','✗ 连接失败：'+e.message+'\n请检查 API Key 权限（需勾选数据查询）和 Profile ID 是否正确。');
+  }finally{if(btn){btn.disabled=false;btn.textContent='测试连接';}}
+}
+
+/* Main fetch — 5 parallel queries: heatmap(3) + DataCenter + Conversion */
+async function ptFetchAll(){
+  const{key,pid,url,urls:fetchUrlsOuter,start,end,normStart,normEnd,conv,category}=ptGetCreds();
+  if(!key||!pid||!url){showSt('st-api','err','请填写 API Key、Profile ID 和页面 URL');return;}
+
+  const btn=document.getElementById('btn-pt-fetch');
+  const progWrap=document.getElementById('pt-progress');
+  const progBar=document.getElementById('pt-prog-bar');
+  const progLbl=document.getElementById('pt-prog-label');
+  if(btn)btn.disabled=true;
+  if(progWrap)progWrap.style.display='flex';
+  showSt('st-api','ok','正在拉取数据...');
+  setBadge('connected','拉取中...');
+
+  const setP=(p,lbl)=>{if(progBar)progBar.style.width=p+'%';if(progLbl)progLbl.textContent=lbl;};
+  setP(10,'发起并行请求...');
+
+  try{
+    const fetchUrls=fetchUrlsOuter.length?fetchUrlsOuter:[url].filter(Boolean);
+    const dcBase={profileId:pid,startDate:start,endDate:end,lang:'ZH'};
+    const convNames=conv?[conv]:[];
+    const convMetrics=conv?['conversionRate']:[];
+
+    // ── Per-URL heatmap queries: all URLs × 3 queries, all in parallel ───
+    showSt('st-api','ok',`正在对 ${fetchUrls.length} 个 URL 并行拉取数据...`);
+    const urlResults=await Promise.all(fetchUrls.map(async(u)=>{
+      const hm={profileId:pid,url:u,startDate:start,endDate:end,deviceType:'ALL',rangeType:'MERGE_URL',lang:'ZH'};
+      const [r1,r2,r3]=await Promise.all([
+        ptPost(key,'/open-api/v1/heatmap/query',{...hm,queryType:'page_metrics',
+          metrics:['visits','uv','bounceRate','fvRate','newVisitsRate',...convMetrics],conversionNames:convNames}),
+        ptPost(key,'/open-api/v1/heatmap/query',{...hm,queryType:'page_insight',funName:'sourceType',
+          metrics:['visits',...convMetrics],conversionNames:convNames}),
+        // Q3: Event API — dimensions必须含eventName，visitType作为分组维度
+        // 文档要求: dimensions含非eventName字段时，filters里必须加eventName过滤
+        conv
+          ? ptPost(key,'/open-api/v1/heatmap/query',{
+              ...hm,
+              queryType:'page_insight',
+              funName:'visitType',
+              metrics:['visits','conversionRate'],
+              conversionNames:[conv]
+            }).then(r=>{
+              console.log('[Q3 heatmap visitType 成功] insights:', JSON.stringify(r?.insights?.map(i=>({name:i.name,nameType:typeof i.name,cvr:i.conversions?.[0]?.conversionRate?.value}))));
+              return r;
+            }).catch(e=>{
+              console.error('[Q3 heatmap visitType 失败]', e.message);
+              // fallback: event/query
+              return ptPost(key,'/open-api/v1/event/query',{
+                profileId:pid, startDate:start, endDate:end,
+                dimensions:['eventName','visitType'],
+                metrics:['eventCount','sessions'],
+                filters:[{name:'eventName',op:'include',value:[conv]}],
+                lang:'ZH'
+              }).then(r=>{
+                console.log('[Q3 Event fallback 成功] rows:', JSON.stringify(r?.rows));
+                return r;
+              }).catch(e2=>{
+                console.error('[Q3 Event fallback 失败]', e2.message);
+                return null;
+              });
+            })
+          : Promise.resolve(null),
+      ]);
+      return{url:u,r1,r2,r3};
+    }));
+
+    // ── Q4: DataCenter overview ───────────────────────────────────────────
+    const pq4=ptPost(key,'/open-api/v1/datacenter/query',{
+      ...dcBase,queryType:'overview',topic:'metrics'
+    }).catch(e=>{console.warn('DataCenter skipped:',e.message);return null;});
+    // ── Q5: Conversion metrics ────────────────────────────────────────────
+    const pq5=ptPost(key,'/open-api/v1/conversion/query',{
+      ...dcBase,queryType:'metrics'
+    }).catch(e=>{console.warn('Conversion skipped:',e.message);return null;});
+    const [q4,q5]=await Promise.all([pq4,pq5]);
+
+    // Q-norm: 平时期间 heatmap — for 我的大促 vs 我的平时
+    const normUrlResults=await Promise.all(fetchUrls.map(async(u)=>{
+      const hm={profileId:pid,url:u,startDate:normStart,endDate:normEnd,deviceType:'ALL',rangeType:'MERGE_URL',lang:'ZH'};
+      return ptPost(key,'/open-api/v1/heatmap/query',{...hm,queryType:'page_metrics',
+        metrics:['visits','uv','bounceRate','fvRate','newVisitsRate',...convMetrics],conversionNames:convNames
+      }).catch(()=>null);
+    }));
+
+
+    setP(90,'解析数据...');
+
+    // ── Parse per-URL results, visits-weighted average ────────────────────
+    const parseVisits=v=>parseInt(String(v||0).replace(/,/g,''))||0;
+    const urlParsed=urlResults.map(({url:u,r1,r2,r3})=>{
+      const m=r1.metrics||{};
+      const visits=parseVisits(m.visits?.value??m.visits);
+      let cvr=null;
+      if(conv&&r1.conversions?.length>0) cvr=ptParsePct(r1.conversions[0]?.conversionRate?.value);
+      const srcMap={};
+      (r2.insights||[]).forEach(ins=>{
+        srcMap[ins.name]=ins.conversions?.length>0?ptParsePct(ins.conversions[0]?.conversionRate?.value):null;
+      });
+      // Parse Q3: support both heatmap page_insight and event/query response formats
+      const vtMap={};
+      if(r3){
+        if(r3.insights){
+          // heatmap page_insight format
+          // name 可能是字符串("New visits"/"Returning visits") 或数字(1=新访/0=回访)
+          r3.insights.forEach((ins,idx)=>{
+            const cvrVal=ins.conversions?.length>0
+              ?ptParsePct(ins.conversions[0]?.conversionRate?.value)
+              :null;
+            const rawName=ins.name;
+            // 标准化 key：数字1或字符串"New visits"/"新访问" → 统一用 'New visits'
+            let key;
+            if(rawName==='New visits'||rawName==='新访问'||rawName===1||rawName==='1') key='New visits';
+            else if(rawName==='Returning visits'||rawName==='回访访问'||rawName===0||rawName==='0') key='Returning visits';
+            else key=String(rawName);
+            vtMap[key]=cvrVal;
+          });
+        } else if(r3.rows){
+          // event/query 响应: rows 每行含 eventName + visitType + eventCount + sessions
+          // CVR = eventCount(转化次数) / sessions(访问次数) * 100
+          r3.rows.forEach(row=>{
+            const vt=row.visitType||row['visitType']||'';
+            const ec=parseInt(String(row.eventCount||row.completions||'0').replace(/,/g,''))||0;
+            const sess=parseInt(String(row.sessions||'0').replace(/,/g,''))||0;
+            if(vt&&sess>0) vtMap[vt]=+(ec/sess*100).toFixed(2);
+          });
+        }
+      }
+      console.log('[Q3 vtMap]', vtMap, '| r3 keys:', r3?Object.keys(r3):'null');
+      return{url:u,visits,
+        bounce:ptParsePct(m.bounceRate?.value),
+        fv:ptParsePct(m.fvRate?.value),
+        newPct:ptParsePct(m.newVisitsRate?.value),
+        cvr,
+        adsCVR:srcMap['Campaign']??srcMap['广告']??null,
+        searchCVR:srcMap['Search']??srcMap['搜索引擎']??null,
+        directCVR:srcMap['Direct']??srcMap['直接访问']??null,
+        socialCVR:srcMap['Social']??srcMap['社交网络']??null,
+        refCVR:srcMap['Referral']??srcMap['外部链接']??null,
+        newCVR:vtMap['New visits']??vtMap['新访问']??null,
+        retCVR:vtMap['Returning visits']??vtMap['回访访问']??null,
+      };
+    });
+    const totalV=urlParsed.reduce((s,p)=>s+(p.visits||0),0);
+    const wavg=(k)=>{
+      if(totalV>0){const w=urlParsed.filter(p=>p[k]!==null&&p.visits>0);if(w.length)return w.reduce((s,p)=>s+p[k]*p.visits,0)/w.reduce((s,p)=>s+p.visits,0);}
+      const v=urlParsed.map(p=>p[k]).filter(v=>v!==null);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;
+    };
+    const bounceRaw=wavg('bounce'),fvRaw=wavg('fv'),newPctRaw=wavg('newPct');
+    let overallCVR=wavg('cvr');
+    const adsCVR=wavg('adsCVR'),searchCVR=wavg('searchCVR'),directCVR=wavg('directCVR');
+    const socialCVR=wavg('socialCVR'),refCVR=wavg('refCVR');
+    const newCVR=wavg('newCVR'),retCVR=wavg('retCVR');
+
+    // ── Parse Q4: DataCenter ──────────────────────────────────────────────
+    let dcBounce=null,dcNewPct=null,dcRetPct=null,dcCVR=null,dcVisits=null;
+    if(q4){const dm=q4.metrics||q4.data||q4;if(dm&&typeof dm==='object'){
+      dcBounce=ptParsePct(dm.bounceRate?.value??dm.bounceRate);
+      dcNewPct=ptParsePct(dm.newVisitsRate?.value??dm.newVisitsRate);
+      dcRetPct=ptParsePct(dm.returnVisitsRate?.value??dm.returnVisitsRate);
+      dcCVR=ptParsePct(dm.conversionRate?.value??dm.conversionRate);
+      dcVisits=parseInt(String(dm.visits?.value??dm.visits??'').replace(/,/g,''))||null;
+    }}
+
+    // ── Parse Q5: Conversion ──────────────────────────────────────────────
+    let convCVR=null,convCount=null,convValue=null;
+    if(q5){const cm=q5.metrics||q5.data||q5;if(cm&&typeof cm==='object'){
+      convCVR=ptParsePct(cm.conversionRate?.value??cm.conversionRate);
+      convCount=parseInt(String(cm.conversions?.value??cm.conversions??'').replace(/,/g,''))||null;
+      convValue=parseFloat(String(cm.conversionValue?.value??cm.conversionValue??'').replace(/,/g,''))||null;
+    }}
+    if(!overallCVR) overallCVR=dcCVR??convCVR;
+
+    // ── Parse norm period CVR (平时) ───────────────────────────────────────
+    const parseVisitsN=v=>parseInt(String(v||0).replace(/,/g,''))||0;
+    const normParsed=normUrlResults.map((r,i)=>{
+      if(!r)return{cvr:null,visits:0};
+      const m=r.metrics||{};
+      let cvr=null;
+      if(conv&&r.conversions?.length>0) cvr=ptParsePct(r.conversions[0]?.conversionRate?.value);
+      return{cvr,visits:parseVisitsN(m.visits?.value??m.visits)};
+    });
+    const normTotalV=normParsed.reduce((s,p)=>s+p.visits,0);
+    const normCVR=(()=>{
+      if(normTotalV>0){const w=normParsed.filter(p=>p.cvr!==null&&p.visits>0);if(w.length)return w.reduce((s,p)=>s+p.cvr*p.visits,0)/w.reduce((s,p)=>s+p.visits,0);}
+      const v=normParsed.map(p=>p.cvr).filter(v=>v!==null);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;
+    })();
+
+    MY.norm_cvr=normCVR;
+    MY.category=category;
+
+
+    setP(100,'✓ 完成');
+
+    // ── Populate MY store ────────────────────────────────────────────────
+    MY.cvr       = overallCVR;
+    MY.norm_cvr  = normCVR;
+    MY.category  = category;
+    MY.urlParsed = urlParsed; // full per-URL data for s3
+    // 更新品类KPI条
+    updateCatKpiBar(category);
+    MY.bounce    = bounceRaw;
+    MY.above     = fvRaw;          // fvRate → 首屏流失率
+    MY.new_pct   = newPctRaw;
+    MY.new_cvr   = newCVR;
+    MY.ret_cvr   = retCVR;
+    MY.ads_cvr   = adsCVR;
+    MY.search_cvr= searchCVR;
+    MY.direct_cvr= directCVR;
+    MY.social_cvr= socialCVR;
+
+    // Mirror into manual input fields (for visibility / fine-tuning)
+    const sf=(id,v)=>{const el=document.getElementById(id);if(el&&v!==null)el.value=v.toFixed(2);};
+    sf('my-cvr',overallCVR);
+    sf('my-bounce',bounceRaw);
+    sf('my-above',fvRaw);
+    sf('my-new-pct',newPctRaw);
+    sf('my-new-cvr',newCVR);
+    sf('my-ret-cvr',retCVR);
+    sf('my-ads-cvr',adsCVR);
+    sf('my-search-cvr',searchCVR);
+    sf('my-direct-cvr',directCVR);
+
+    // Count how many metrics we got
+    const gotCount=[overallCVR,bounceRaw,fvRaw,newPctRaw,newCVR,retCVR,adsCVR,searchCVR,directCVR,dcBounce,dcNewPct,convCVR,convCount].filter(v=>v!==null).length;
+
+    ptShowPreview({overallCVR,bounceRaw,fvRaw,newPctRaw,newCVR,retCVR,adsCVR,searchCVR,directCVR,socialCVR,refCVR,dcBounce,dcNewPct,dcRetPct,dcCVR,dcVisits,convCVR,convCount,convValue,urlParsed,url,start,end,conv,gotCount});
+
+    // Apply comparison view
+    setBadge('connected','已连接');
+    const cvrNote=conv?'':' · 未填转化目标，CVR 相关指标为空';
+    showSt('st-api','ok',`✓ 成功拉取 ${gotCount} 项指标，已自动生成对比视图。${cvrNote}`);
+
+    document.getElementById('my-data-badge').style.display='inline-flex';
+    document.getElementById('btn-clear').style.display='inline-block';
+    if(MY.cvr!==null){
+      const _mkc=document.getElementById('my-kpi-card');if(_mkc)_mkc.style.display='block';
+      {const _e=document.getElementById('my-kpi-val');if(_e)_e.textContent=MY.cvr.toFixed(2)+'%';}
+      const d=MY.cvr-IND.cvr;
+      {const _e=document.getElementById('my-kpi-delta');if(_e)_e.textContent=(d>=0?'↑ +':'↓ ')+Math.abs(d).toFixed(2)+'pp vs 行业';}
+    }
+    showToggles();
+    buildDimChips();
+    updateOverviewChart();
+    renderS3My(); // update s3 with real URL data
+
+  }catch(e){
+    setBadge('error');
+    showSt('st-api','err','✗ 拉取失败：'+e.message);
+    setP(0,'');
+  }finally{
+    if(btn)btn.disabled=false;
+    setTimeout(()=>{if(progWrap)progWrap.style.display='none';},2500);
+  }
+}
+
+function ptShowPreview({overallCVR,bounceRaw,fvRaw,newPctRaw,newCVR,retCVR,adsCVR,searchCVR,directCVR,socialCVR,refCVR,dcBounce,dcNewPct,dcRetPct,dcCVR,dcVisits,convCVR,convCount,convValue,urlParsed,url,start,end,conv,gotCount}){
+  const wrap=document.getElementById('pt-preview');
+  const cont=document.getElementById('pt-preview-content');
+  if(!wrap||!cont)return;
+  wrap.style.display='block';
+
+  const fmt=v=>{
+    if(v===null||v===undefined)return`<span style="font-size:11px;color:var(--t3)">—${conv?'':' (需填转化目标)'}</span>`;
+    return`<span class="mono" style="font-size:12px;font-weight:600;color:var(--teal)">${v.toFixed(2)}%</span>`;
+  };
+  const fmtSrc=v=>v===null
+    ?`<span style="font-size:11px;color:var(--t3)">—</span>`
+    :`<span class="mono" style="font-size:12px;font-weight:600;color:var(--accent)">${v.toFixed(2)}%</span>`;
+
+  const row=(lbl,v,isChannel=false)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--t2)">${lbl}</div>
+      ${isChannel?fmtSrc(v):fmt(v)}
+    </div>`;
+
+  // 生成单个页面的详情卡片（可折叠）
+  const pageCard=(p,i)=>{
+    const shortUrl=p.url.replace(/https?:\/\/[^/]+/,'').slice(0,50)||'/';
+    const cardId=`preview-page-${i}`;
+    return`
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:6px">
+      <div onclick="togglePreviewCard('${cardId}')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:var(--surface2);user-select:none">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0">
+          <span style="font-size:10px;font-weight:700;color:${['#534ab7','#0f6e56','#d85a30'][i]||'#888'};font-family:DM Mono,monospace;flex-shrink:0">Top ${i+1}</span>
+          <span style="font-size:11px;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.url}">${shortUrl}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          ${p.cvr!==null?`<span class="mono" style="font-size:11px;color:var(--teal)">${p.cvr.toFixed(2)}%</span>`:''}
+          ${p.bounce!==null?`<span class="mono" style="font-size:11px;color:var(--t2)">${p.bounce.toFixed(1)}%跳出</span>`:''}
+          <span id="${cardId}-arrow" style="font-size:12px;color:var(--t3);transition:transform .2s">▼</span>
+        </div>
+      </div>
+      <div id="${cardId}" style="display:none;padding:10px 12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
+          <div>
+            <div style="font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">页面行为</div>
+            ${row('整体 CVR',p.cvr)}
+            ${row('跳出率',p.bounce)}
+            ${row('首屏流失',p.fv)}
+            ${row('新访比例',p.newPct)}
+            ${row('新用户 CVR',p.newCVR)}
+            ${row('回访用户 CVR',p.retCVR)}
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">渠道 CVR</div>
+            ${row('广告',p.adsCVR,true)}
+            ${row('搜索',p.searchCVR,true)}
+            ${row('直访',p.directCVR,true)}
+            ${row('社交',p.socialCVR,true)}
+            ${row('外链',p.refCVR,true)}
+          </div>
+        </div>
+        ${p.visits?`<div style="margin-top:6px;font-size:10px;color:var(--t3)">访问次数 <span class="mono" style="color:var(--t)">${p.visits.toLocaleString()}</span></div>`:''}
+      </div>
+    </div>`;
+  };
+
+  // 汇总行（加权平均）
+  const summaryHtml=`
+    <div style="background:var(--surface2);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--t3);line-height:1.6">
+      <div>${start} ~ ${end}${conv?` · 转化目标：<strong style="color:var(--t2)">${conv}</strong>`:' · <span style="color:var(--amber)">未指定转化目标</span>'} · 共 <strong style="color:var(--t)">${gotCount}</strong> 项指标</div>
+    </div>`;
+
+  // 各页面卡片（urlParsed 有几个就显示几个，最多3个）
+  const pages=urlParsed||[];
+  const cardsHtml=pages.slice(0,3).map((p,i)=>pageCard(p,i)).join('');
+
+  // DataCenter / Conversion 汇总（折叠）
+  const dcHtml=(dcCVR!==null||dcBounce!==null)?`
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:6px">
+      <div onclick="togglePreviewCard('preview-dc')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:var(--purple-bg);user-select:none">
+        <span style="font-size:11px;font-weight:500;color:var(--purple-t)">DataCenter — 站点整体</span>
+        <span id="preview-dc-arrow" style="font-size:12px;color:var(--purple-t);transition:transform .2s">▼</span>
+      </div>
+      <div id="preview-dc" style="display:none;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        ${dcCVR!==null?`<div style="font-size:11px;color:var(--t2)">站点CVR <span class="mono" style="color:var(--teal)">${dcCVR.toFixed(2)}%</span></div>`:''}
+        ${dcBounce!==null?`<div style="font-size:11px;color:var(--t2)">跳出率 <span class="mono">${dcBounce.toFixed(1)}%</span></div>`:''}
+        ${dcNewPct!==null?`<div style="font-size:11px;color:var(--t2)">新访比例 <span class="mono">${dcNewPct.toFixed(1)}%</span></div>`:''}
+        ${dcVisits!==null?`<div style="font-size:11px;color:var(--t2)">访问次数 <span class="mono">${dcVisits.toLocaleString()}</span></div>`:''}
+      </div>
+    </div>`:'';
+
+  const convHtml=(convCVR!==null||convCount!==null)?`
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:6px">
+      <div onclick="togglePreviewCard('preview-conv')" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;background:var(--amber-bg);user-select:none">
+        <span style="font-size:11px;font-weight:500;color:var(--amber-t)">Conversion — 全站转化</span>
+        <span id="preview-conv-arrow" style="font-size:12px;color:var(--amber-t);transition:transform .2s">▼</span>
+      </div>
+      <div id="preview-conv" style="display:none;padding:10px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        ${convCVR!==null?`<div style="font-size:11px;color:var(--t2)">转化率 <span class="mono" style="color:var(--teal)">${convCVR.toFixed(2)}%</span></div>`:''}
+        ${convCount!==null?`<div style="font-size:11px;color:var(--t2)">转化次数 <span class="mono">${convCount.toLocaleString()}</span></div>`:''}
+        ${convValue!==null?`<div style="font-size:11px;color:var(--t2)">转化价值 <span class="mono">${convValue.toLocaleString()}</span></div>`:''}
+      </div>
+    </div>`:'';
+
+  cont.innerHTML=summaryHtml+cardsHtml+dcHtml+convHtml;
+}
+
+function togglePreviewCard(id){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById(id+'-arrow');
+  if(!el)return;
+  const isOpen=el.style.display!=='none';
+  el.style.display=isOpen?'none':'block';
+  if(arrow)arrow.style.transform=isOpen?'':'rotate(180deg)';
+}
+
+/* ── channel data ── */
+const CD={
+  bfcm:[{n:'广告 (Ads)',s:64.43,c:0.60,col:'#534ab7'},{n:'直接访问',s:24.62,c:1.60,col:'#378add'},{n:'搜索引擎',s:7.52,c:1.54,col:'#0f6e56'},{n:'Email',s:1.94,c:2.20,col:'#d85a30'},{n:'社交网络',s:1.97,c:0.49,col:'#ba7517'},{n:'外部链接',s:1.46,c:1.43,col:'#888780'}],
+  normal:[{n:'广告 (Ads)',s:63.83,c:0.48,col:'#534ab7'},{n:'直接访问',s:22.30,c:1.01,col:'#378add'},{n:'搜索引擎',s:9.61,c:1.12,col:'#0f6e56'},{n:'Email',s:1.32,c:2.04,col:'#d85a30'},{n:'社交网络',s:2.89,c:0.35,col:'#ba7517'},{n:'外部链接',s:1.38,c:0.63,col:'#888780'}]
+};
+let chMode='bfcm';
+function setChMode(m){chMode=m;document.querySelectorAll('#s2 .tr .tb').forEach((b,i)=>b.classList.toggle('on',(i===0&&m==='bfcm')||(i===1&&m==='normal')));renderCh();updateScatter();}
+function renderCh(){
+  const d=CD[chMode],tot=d.reduce((s,x)=>s+x.s/100*x.c,0);
+  document.getElementById('ch-rows').innerHTML=d.map(x=>{const qi=(x.s/100*x.c/tot*100);return`<div class="ch-row"><div class="ch-n">${x.n}</div><div><div class="ch-bw"><div class="ch-b" style="width:${x.s}%;background:${x.col}"></div></div></div><div class="cn">${x.s.toFixed(1)}%</div><div class="cn ${x.c>=1.5?'hi':x.c<=0.6?'lo':''}">${x.c.toFixed(2)}%</div><div class="cn ${qi>20?'hi':qi<8?'lo':''}">${qi.toFixed(0)}%</div></div>`;}).join('');
+}
+renderCh();
+
+let scChart;
+function initScatter(){
+  const ctx=document.getElementById('scatterChart').getContext('2d');
+  scChart=new Chart(ctx,{type:'bubble',data:{datasets:CD.bfcm.map(p=>({label:p.n,data:[{x:p.s,y:p.c,r:Math.sqrt(p.s)*2.2}],backgroundColor:p.col+'cc',borderColor:p.col,borderWidth:1}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.x.toFixed(1)}% · ${c.raw.y.toFixed(2)}%`}}},scales:{x:{min:0,max:80,grid:{color:GC},ticks:{color:TC,font:{size:9}},title:{display:true,text:'流量占比 %',color:TC,font:{size:9}}},y:{min:0,max:3,grid:{color:GC},ticks:{color:TC,font:{size:9}},title:{display:true,text:'CVR %',color:TC,font:{size:9}}}}}});
+}
+function updateScatter(){const d=CD[chMode];scChart.data.datasets.forEach((ds,i)=>{if(d[i])ds.data=[{x:d[i].s,y:d[i].c,r:Math.sqrt(d[i].s)*2.2}]});scChart.update();}
+
+// ── Industry benchmark LP data (fallback display) ──────────────────────────
+const LP_IND={
+  top1:[{t:'产品页',c:0.39,b:78.25,a:54.33},{t:'活动页',c:0.53,b:70.04,a:34.77},{t:'列表页',c:0.51,b:73.19,a:50.77},{t:'内容页',c:0.75,b:68.50,a:30.41},{t:'首页',c:0.58,b:70.40,a:65.70}],
+  top2:[{t:'产品页',c:0.46,b:76.15,a:44.41},{t:'活动页',c:0.91,b:63.51,a:35.29},{t:'列表页',c:0.59,b:61.22,a:38.14},{t:'内容页',c:0.37,b:71.26,a:35.96},{t:'首页',c:1.08,b:55.96,a:43.68}],
+  top3:[{t:'产品页',c:0.44,b:73.26,a:48.50},{t:'活动页',c:0.77,b:60.74,a:27.54},{t:'列表页',c:0.48,b:61.44,a:44.38},{t:'内容页',c:0.20,b:70.20,a:34.63},{t:'首页',c:1.68,b:45.00,a:32.79}]
+};
+
+// Category benchmark: CVR / bounceRate / fvRate — BFCM averages per category
+const CAT_LP_BM={
+  '母婴':           {cvr:2.14,bounce:67.0,fv:33.0},
+  '储能':           {cvr:1.23,bounce:70.0,fv:36.0},
+  '智能科技':       {cvr:2.47,bounce:65.0,fv:31.0},
+  '假发':           {cvr:1.85,bounce:66.0,fv:30.0},
+  '户外装备':       {cvr:0.44,bounce:74.0,fv:42.0},
+  '鞋服':           {cvr:3.23,bounce:62.0,fv:28.0},
+  '消费电子/数码配件':{cvr:1.07,bounce:72.0,fv:38.0},
+  '箱包':           {cvr:0.92,bounce:71.0,fv:37.0},
+  'Ebike':          {cvr:0.68,bounce:73.0,fv:40.0},
+  '家居硬件':       {cvr:0.15,bounce:77.0,fv:50.0},
+  '电动滑板车':     {cvr:0.58,bounce:73.0,fv:40.0},
+  '汽车配件':       {cvr:0.35,bounce:75.0,fv:44.0},
+  '软件控制器':     {cvr:0.21,bounce:76.0,fv:48.0},
+  '全品类':         {cvr:0.53,bounce:70.0,fv:35.0},
+};
+
+// Pill colors by URL index
+const LP_COLORS=['#534ab7','#0f6e56','#d85a30','#ba7517','#378add'];
+
+let s3BmMode='inline'; // 'inline' | 'tab'
+
+function setS3BmMode(m){
+  s3BmMode=m;
+  document.querySelectorAll('#s3-bm-tg .tb').forEach((b,i)=>b.classList.toggle('on',['inline','tab'][i]===m));
+  renderS3My();
+}
+
+// Industry-only fallback table (unchanged from before)
+function renderLP(){
+  const d=LP_IND.top1,mx=Math.max(...d.map(x=>x.c));
+  const cols=['#d85a30','#0f6e56','#ba7517','#534ab7','#378add'];
+  const bgs=['#faece7','#e1f5ee','#faeeda','#eeedfe','#e6f1fb'];
+  const tcs=['#712b13','#085041','#633806','#3c3489','#185fa5'];
+  document.getElementById('lp-rows').innerHTML=d.map((x,i)=>`
+    <div class="lp-row">
+      <div class="lp-rk">${i+1}</div>
+      <div><span style="background:${bgs[i]};color:${tcs[i]};font-size:11px;padding:2px 7px;border-radius:20px;font-weight:500">${x.t}</span></div>
+      <div><div style="height:4px;border-radius:2px;background:var(--surface2);overflow:hidden"><div style="width:${x.c/mx*100}%;height:100%;background:${cols[i]};border-radius:2px"></div></div></div>
+      <div class="lv ${x.c===mx?'lg':x.c<0.45?'lb':''}">${x.c.toFixed(2)}%</div>
+      <div class="lv ${x.b>75?'lb':x.b<62?'lg':'lw'}">${x.b.toFixed(1)}%</div>
+      <div class="lv ${x.a>55?'lb':x.a<35?'lg':'lw'}">${x.a.toFixed(1)}%</div>
+    </div>`).join('');
+}
+renderLP();
+
+// ── Render my real URL data in s3 ──────────────────────────────────────────
+function renderS3My(){
+  const pages=MY.urlParsed;
+  if(!pages||!pages.length) return;
+
+  document.getElementById('s3-no-data').style.display='none';
+  document.getElementById('s3-industry-area').style.display='none';
+  document.getElementById('s3-data-area').style.display='block';
+
+  const cat=MY.category||'全品类';
+  const bm=CAT_LP_BM[cat]||CAT_LP_BM['全品类'];
+
+  const catLbl=document.getElementById('s3-bm-cat-label');
+  if(catLbl) catLbl.textContent=cat==='全品类'?'全品类均值':cat+' 品类均值';
+  document.getElementById('s3-bm-tab').style.display='none';
+
+  const CARD_COLORS=['#534ab7','#0f6e56','#d85a30'];
+
+  function metricCell(label,myV,bmV,inv,dec){
+    dec=dec||2;
+    const has=myV!==null&&myV!==undefined;
+    const better=has&&(inv?myV<bmV:myV>bmV);
+    const worse=has&&(inv?myV>bmV:myV<bmV);
+    const valColor=!has?'var(--t3)':better?'var(--teal)':'var(--coral)';
+    const diff=has?Math.abs(myV-bmV).toFixed(dec):null;
+    const badge=diff===null?'':
+      '<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:600;'
+      +'background:'+(better?'var(--teal-bg)':worse?'var(--coral-bg)':'var(--surface2)')
+      +';color:'+(better?'var(--teal-t)':worse?'var(--coral-t)':'var(--t3)')+';">'
+      +(better?'▲':worse?'▼':'=')+diff+'</span>';
+    return '<div style="flex:1;padding:14px 16px;border-left:1px solid var(--border)">'
+      +'<div style="font-size:10px;color:var(--t3);margin-bottom:6px;font-weight:500">'+label+'</div>'
+      +'<div style="font-size:22px;font-weight:600;font-family:DM Mono,monospace;color:'+valColor+';line-height:1">'+(has?myV.toFixed(dec)+'%':'—')+'</div>'
+      +'<div style="font-size:10px;color:var(--t3);margin-top:5px">品类均值 <span style="font-family:DM Mono,monospace">'+bmV.toFixed(dec)+'%</span></div>'
+      +badge
+    +'</div>';
+  }
+
+  document.getElementById('lp-rows-my').innerHTML=pages.map(function(p,i){
+    var col=CARD_COLORS[i%CARD_COLORS.length];
+    var shortUrl=p.url.replace(/https?:\/\/[^/]+/,'').slice(0,60)||'/';
+    return '<div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px">'
+      +'<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border)">'
+        +'<div style="width:22px;height:22px;background:'+col+'18;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+col+';flex-shrink:0">'+(i+1)+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-size:12px;font-weight:600;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+p.url+'">'+shortUrl+'</div>'
+          +(p.visits?'<div style="font-size:10px;color:var(--t3);margin-top:1px">'+p.visits.toLocaleString()+' 次访问</div>':'')
+        +'</div>'
+        +(p.newPct!==null&&p.newPct!==undefined?'<div style="font-size:10px;color:var(--t3)">新访 <span style="font-family:DM Mono,monospace;color:var(--t)">'+p.newPct.toFixed(0)+'%</span></div>':'')
+      +'</div>'
+      +'<div style="display:flex">'
+        +metricCell('CVR 转化率',p.cvr,bm.cvr,false,2)
+        +metricCell('跳出率',p.bounce,bm.bounce,true,1)
+        +metricCell('首屏流失率',p.fv,bm.fv,true,1)
+      +'</div>'
+    +'</div>';
+  }).join('');
+
+  renderFunnelCards(pages,bm);
+}
+
+function renderFunnelCards(pages,bm){
+  const el=document.getElementById('funnel-cards');
+  if(!el)return;
+  const CARD_COLORS=['#534ab7','#0f6e56','#d85a30'];
+  el.innerHTML=pages.slice(0,3).map(function(p,i){
+    const col=CARD_COLORS[i];
+    const shortUrl=p.url.replace(/https?:\/\/[^/]+/,'').slice(0,28)||'/';
+    const aboveFold=p.fv!==null?(100-p.fv):null;
+    const notBounce=p.bounce!==null?(100-p.bounce):null;
+    const steps=[
+      {l:'访问进入',   v:'100%',                                         w:100},
+      {l:'首屏未流失', v:aboveFold!==null?aboveFold.toFixed(1)+'%':'—',  w:aboveFold||0},
+      {l:'未跳出留存', v:notBounce!==null?notBounce.toFixed(1)+'%':'—',  w:notBounce||0},
+      {l:'最终转化',   v:p.cvr!==null?p.cvr.toFixed(2)+'%':'—',          w:p.cvr!==null?Math.min(p.cvr*20,100):0},
+    ];
+    return '<div class="card-sm" style="border-top:3px solid '+col+'">'
+      +'<div style="margin-bottom:10px">'
+        +'<div style="font-size:10px;font-weight:700;color:'+col+';margin-bottom:3px">Top '+(i+1)+'</div>'
+        +'<div style="font-size:11px;font-weight:600;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+p.url+'">'+shortUrl+'</div>'
+        +(p.visits?'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+p.visits.toLocaleString()+' 访问</div>':'')
+      +'</div>'
+      +steps.map(function(s){
+        const isConv=s.l==='最终转化';
+        return '<div style="margin-bottom:7px">'
+          +'<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">'
+            +'<span style="color:var(--t3)">'+s.l+'</span>'
+            +'<span style="font-family:DM Mono,monospace;font-weight:600;color:'+(isConv?col:'var(--t)')+'">'+s.v+'</span>'
+          +'</div>'
+          +'<div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden">'
+            +'<div style="width:'+s.w+'%;height:100%;background:'+col+';border-radius:2px;opacity:'+(isConv?1:0.55)+'"></div>'
+          +'</div>'
+        +'</div>';
+      }).join('')
+    +'</div>';
+  }).join('');
+  for(var j=pages.length;j<3;j++){
+    el.innerHTML+='<div class="card-sm" style="border-top:3px solid var(--border);display:flex;align-items:center;justify-content:center;min-height:100px;color:var(--t3);font-size:12px">Top '+(j+1)+' — 未接入数据</div>';
+  }
+}
+
+/* ── Phase timeline (3 configurable phases) ────────────────────────────── */
+const PHASE_DEFAULTS=[
+  {name:'早鸟预热期',start:'2024-11-01',end:'2024-11-14',col:'#534ab7',bg:'rgba(83,74,183,.22)',badge:'b-purple'},
+  {name:'正式活动期',start:'2024-11-15',end:'2024-11-29',col:'#d85a30',bg:'rgba(216,90,48,.22)',badge:'b-coral'},
+  {name:'限时返场期',start:'2024-11-30',end:'2024-12-03',col:'#0f6e56',bg:'rgba(15,110,86,.22)',badge:'b-teal'},
+];
+let phases=PHASE_DEFAULTS.map(p=>({...p}));
+let timelineChartRef=null;
+
+function togglePhaseConfig(){
+  const el=document.getElementById('phase-config');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+function resetPhases(){
+  phases=PHASE_DEFAULTS.map(p=>({...p}));
+  phases.forEach((p,i)=>{
+    document.getElementById('ph'+(i+1)+'-start').value=p.start;
+    document.getElementById('ph'+(i+1)+'-end').value=p.end;
+  });
+  rebuildTimeline();
+}
+function applyPhases(){
+  [0,1,2].forEach(i=>{
+    phases[i].start=document.getElementById('ph'+(i+1)+'-start').value||phases[i].start;
+    phases[i].end=document.getElementById('ph'+(i+1)+'-end').value||phases[i].end;
+  });
+  rebuildTimeline();
+  document.getElementById('phase-config').style.display='none';
+}
+
+// Build date sequence from first phase start to last phase end
+function buildDateSeq(){
+  const allDates=[];
+  const start=new Date(phases[0].start);
+  const end=new Date(phases[phases.length-1].end);
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    allDates.push(new Date(d));
+  }
+  return allDates;
+}
+
+function phaseOf(date){
+  const iso=date.toISOString().slice(0,10);
+  for(const p of phases){
+    if(iso>=p.start&&iso<=p.end) return p;
+  }
+  return null;
+}
+
+// CVR curve: early warmup low → peak mid → taper end
+function syntheticCVR(idx,total,phaseIdx){
+  const base=[0.72,0.92,0.80];
+  const noise=Math.sin(idx*2.3)*0.04+Math.sin(idx*0.9)*0.02;
+  // peak in middle of active period
+  const pct=idx/total;
+  const bell=phaseIdx===1?0.18*Math.sin(Math.PI*pct):0;
+  return +(base[phaseIdx]+noise+bell).toFixed(2);
+}
+
+function rebuildTimeline(){
+  const dates=buildDateSeq();
+  const labels=[],visits=[],cvrs=[],bgColors=[];
+  const total=dates.length;
+  const phaseMults=[1.0,2.0,1.5]; // visit multiplier per phase
+
+  dates.forEach((d,i)=>{
+    const ph=phaseOf(d);
+    const phIdx=phases.indexOf(ph);
+    const mult=ph?phaseMults[Math.max(0,phIdx)]:1;
+    const mm=d.getMonth()+1,dd=d.getDate();
+    labels.push(`${mm}/${dd}`);
+    visits.push(Math.round(150000*mult*(Math.sin(i*2.7)*0.06+1)));
+    cvrs.push(ph?syntheticCVR(i,total,Math.max(0,phIdx)):0.70);
+    bgColors.push(ph?ph.bg:'rgba(180,178,169,.18)');
+  });
+
+  // Update or create chart
+  if(timelineChartRef){
+    timelineChartRef.data.labels=labels;
+    timelineChartRef.data.datasets[0].data=visits;
+    timelineChartRef.data.datasets[0].backgroundColor=bgColors;
+    timelineChartRef.data.datasets[1].data=cvrs;
+    timelineChartRef.update();
+  } else {
+    const ctx=document.getElementById('timelineChart').getContext('2d');
+    timelineChartRef=new Chart(ctx,{data:{labels,datasets:[
+      {type:'bar',data:visits,backgroundColor:bgColors,borderWidth:0,yAxisID:'y',order:2,borderRadius:2},
+      {type:'line',data:cvrs,borderColor:'#d85a30',borderWidth:2.5,tension:.45,pointRadius:0,yAxisID:'y2',fill:false,order:1}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
+        label:c=>c.datasetIndex===0?`访问: ${(c.raw/1000).toFixed(0)}k`:`CVR: ${c.raw.toFixed(2)}%`
+      }}},
+      scales:{
+        x:{grid:{color:GC},ticks:{color:TC,font:{size:9},autoSkip:true,maxTicksLimit:12}},
+        y:{grid:{color:GC},ticks:{color:TC,font:{size:9},callback:v=>(v/1000).toFixed(0)+'k'},position:'left'},
+        y2:{grid:{display:false},ticks:{color:'#d85a30',font:{size:9},callback:v=>v.toFixed(2)+'%'},position:'right',min:.4,max:1.4}
+      }
+    }});
+  }
+
+  // Update phase badges
+  const badgesEl=document.getElementById('phase-badges');
+  if(badgesEl) badgesEl.innerHTML=phases.map(p=>{
+    const s=p.start.replace('2024-','').replace('-','/');
+    const e=p.end.replace('2024-','').replace('-','/');
+    return`<span class="badge ${p.badge}" style="font-size:10px">${p.name} ${s}–${e}</span>`;
+  }).join('');
+
+  // Update summary cards
+  const summaryEl=document.getElementById('phase-summary');
+  if(summaryEl){
+    const phaseAvgCVR=(phIdx)=>{
+      const pDates=dates.filter(d=>phaseOf(d)===phases[phIdx]);
+      if(!pDates.length)return null;
+      let sum=0;
+      pDates.forEach((_,j)=>sum+=cvrs[dates.indexOf(pDates[j])]);
+      return(sum/pDates.length).toFixed(2);
+    };
+    summaryEl.innerHTML=phases.map((p,i)=>{
+      const avg=phaseAvgCVR(i);
+      return`<div class="card-sm" style="border-left:3px solid ${p.col};border-radius:0 var(--r) var(--r) 0">
+        <div style="font-size:10px;font-weight:600;color:${p.col};margin-bottom:3px">${p.name}</div>
+        <div style="font-size:10px;color:var(--t3);margin-bottom:5px">${p.start.slice(5).replace('-','/')} – ${p.end.slice(5).replace('-','/')}</div>
+        <div class="mono" style="font-size:16px;font-weight:600;color:var(--t)">${avg?avg+'%':'—'}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">均值 CVR</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function initTimeline(){ rebuildTimeline(); }
+
+const AOVD={labels:['0–100','100–200','201–500','501–1000','1001–2000','2001+'],bfcm:[1.02,1.38,1.14,0.42,0.63,0.34],normal:[0.97,1.03,0.71,0.43,0.33,0.26],bfcm_email:[4.34,3.67,1.50,1.86,1.29,0.66],bfcm_direct:[1.89,2.06,2.18,0.68,1.45,0.89],bfcm_ads:[0.77,1.09,0.76,0.25,0.34,0.21]};
+let aovChartRef=null;
+function setAovMode(m){document.querySelectorAll('#s6 .tr .tb').forEach((b,i)=>b.classList.toggle('on',['cvr','channel'][i]===m));renderAov(m);}
+function renderAov(mode){
+  if(!mode)mode=document.querySelector('#s6 .tr .tb.on')?.textContent?.includes('CVR')?'cvr':'channel';
+  if(mode==='cvr'){
+    const notes=[['b-gray','普通'],['b-teal','黄金价格带'],['b-teal','大促爆发'],['b-amber','理性区间'],['b-acc','心愿单'],['b-gray','高端']];
+    document.getElementById('aov-content').innerHTML='<div class="aov-row hd"><div>价格带</div><div style="text-align:center">大促 CVR</div><div style="text-align:center">平时 CVR</div><div style="text-align:center">提升幅度</div><div style="text-align:center">回访最高CVR</div><div style="text-align:center">判断</div></div>'+AOVD.labels.map((l,i)=>{const lift=((AOVD.bfcm[i]-AOVD.normal[i])/AOVD.normal[i]*100).toFixed(0);const ret=[1.59,2.13,2.01,0.70,1.10,0.70];return`<div class="aov-row ${i%2===1?'even':''}"><div style="font-size:12px;font-weight:500;color:var(--t)">${l}</div><div class="av ${AOVD.bfcm[i]>1?'lg':AOVD.bfcm[i]<0.5?'lb':'lw'}">${AOVD.bfcm[i].toFixed(2)}%</div><div class="av" style="color:var(--t3)">${AOVD.normal[i].toFixed(2)}%</div><div class="av ${+lift>30?'lg':+lift<5?'lb':'lw'}">+${lift}%</div><div class="av">${ret[i].toFixed(2)}%</div><div style="text-align:center"><span class="badge ${notes[i][0]}" style="font-size:10px">${notes[i][1]}</span></div></div>`;}).join('');
+  }else{
+    const adSh=[71.01,61.29,61.07,51.65,67.85,66.49];const st=[['b-coral','Email主攻'],['b-teal','平衡投放'],['b-teal','平衡投放'],['b-acc','品牌故事'],['b-purple','蓄水+爆发'],['b-amber','品牌建设']];
+    document.getElementById('aov-content').innerHTML='<div class="aov-row hd"><div>价格带</div><div style="text-align:center">广告 CVR</div><div style="text-align:center">直访 CVR</div><div style="text-align:center">Email CVR</div><div style="text-align:center">广告占比</div><div style="text-align:center">策略</div></div>'+AOVD.labels.map((l,i)=>`<div class="aov-row ${i%2===1?'even':''}"><div style="font-size:12px;font-weight:500;color:var(--t)">${l}</div><div class="av">${AOVD.bfcm_ads[i].toFixed(2)}%</div><div class="av">${AOVD.bfcm_direct[i].toFixed(2)}%</div><div class="av ${AOVD.bfcm_email[i]>3?'lg':''}">${AOVD.bfcm_email[i].toFixed(2)}%</div><div class="av">${adSh[i].toFixed(1)}%</div><div style="text-align:center"><span class="badge ${st[i][0]}" style="font-size:10px">${st[i][1]}</span></div></div>`).join('');
+  }
+}
+renderAov('cvr');
+function initAovChart(){
+  aovChartRef=new Chart(document.getElementById('aovChart').getContext('2d'),{type:'bar',data:{labels:AOVD.labels,datasets:[{label:'大促',data:AOVD.bfcm,backgroundColor:'#534ab7',borderRadius:3},{label:'平时',data:AOVD.normal,backgroundColor:'#b4b2a9',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GC},ticks:{color:TC,font:{size:10}}},y:{grid:{color:GC},ticks:{color:TC,font:{size:9},callback:v=>v.toFixed(2)+'%'},min:0,max:1.6}}}});
+}
+
+const CATS=[{n:'母婴',cvr:2.14,lp:'产品页',lift:'中',col:'#d85a30'},{n:'储能',cvr:1.23,lp:'活动页',lift:'极高',col:'#ba7517'},{n:'智能科技',cvr:2.47,lp:'内容页',lift:'高',col:'#0f6e56'},{n:'假发',cvr:1.85,lp:'产品页',lift:'高',col:'#534ab7'},{n:'户外装备',cvr:0.44,lp:'活动页',lift:'中',col:'#888780'},{n:'鞋服',cvr:3.23,lp:'首页',lift:'高',col:'#378add'},{n:'消费电子/数码配件',cvr:1.07,lp:'产品页',lift:'极高',col:'#5c5a54'},{n:'箱包',cvr:0.92,lp:'产品页',lift:'中',col:'#b4b2a9'},{n:'Ebike',cvr:0.68,lp:'活动页',lift:'高',col:'#1d9e75'},{n:'家居硬件',cvr:0.15,lp:'产品页',lift:'中',col:'#9c9a92'},{n:'电动滑板车',cvr:0.58,lp:'产品页',lift:'中',col:'#378add'},{n:'汽车配件',cvr:0.35,lp:'产品页',lift:'低',col:'#9c9a92'},{n:'软件控制器',cvr:0.21,lp:'产品页',lift:'低',col:'#5c5a54'}];
+function setCatMode(m){document.querySelectorAll('#s7 .tr .tb').forEach((b,i)=>b.classList.toggle('on',['cvr','lp'][i]===m));renderCat(m);}
+function renderCat(mode){
+  if(!mode)mode=document.querySelector('#s7 .tr .tb.on')?.textContent?.includes('CVR')?'cvr':'lp';
+  const s=[...CATS].sort((a,b)=>b.cvr-a.cvr);
+  if(mode==='cvr'){
+    document.getElementById('cat-content').innerHTML=
+      '<div class="cat-row hd"><div>品类</div><div>最佳落地页</div><div style="padding-right:6px">CVR 条</div><div style="text-align:right">大促 CVR</div><div style="text-align:right">较平时</div></div>'+
+      s.map((x,i)=>`<div class="cat-row ${i%2===1?'even':''}">
+        <div style="font-size:12px;font-weight:500;color:var(--t)">${x.n}</div>
+        <div><span class="badge b-acc" style="font-size:10px">${x.lp}</span></div>
+        <div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-right:4px">
+          <div style="width:${x.cvr/3.23*100}%;height:100%;background:${x.col};border-radius:3px"></div></div></div>
+        <div class="mono" style="font-size:11px;text-align:right;color:${x.cvr>1?'var(--teal)':x.cvr<0.2?'var(--coral)':'var(--t2)'}">${x.cvr.toFixed(2)}%</div>
+        <div style="text-align:right"><span class="badge ${x.lift==='极高'?'b-teal':x.lift==='高'?'b-acc':x.lift==='中'?'b-gray':'b-coral'}" style="font-size:10px">${x.lift}</span></div>
+      </div>`).join('');
+  } else {
+    const cs={'快时尚':'首页+社交','智能硬件':'内容页+搜索','母婴':'产品页+Email',
+      '移动储能':'活动页+广告','户外机器人':'产品页+广告','户外':'活动页+搜索',
+      '出行':'产品页+Email','3D打印机':'产品页+搜索','家居家具':'产品页+直访'};
+    document.getElementById('cat-content').innerHTML=
+      '<div class="cat-row hd"><div>品类</div><div>最佳落地页</div><div style="text-align:right">大促 CVR</div><div>渠道组合建议</div><div></div></div>'+
+      s.map((x,i)=>`<div class="cat-row ${i%2===1?'even':''}">
+        <div style="font-size:12px;font-weight:500;color:var(--t)">${x.n}</div>
+        <div><span class="badge b-acc" style="font-size:10px">${x.lp}</span></div>
+        <div class="mono" style="font-size:11px;text-align:right;color:${x.cvr>1?'var(--teal)':x.cvr<0.2?'var(--coral)':'var(--t2)'}">${x.cvr.toFixed(2)}%</div>
+        <div style="font-size:11px;color:var(--t2)">${cs[x.n]||'—'}</div>
+        <div></div>
+      </div>`).join('');
+  }
+}
+renderCat('cvr');
+
+function initRegion(){new Chart(document.getElementById('regionChart').getContext('2d'),{type:'bar',data:{labels:['北美','欧洲','其他地区'],datasets:[{label:'大促',data:[0.86,0.94,0.58],backgroundColor:['#378add','#0f6e56','#ba7517'],borderRadius:3},{label:'平时',data:[0.67,0.55,0.61],backgroundColor:['#378add44','#0f6e5644','#ba751744'],borderRadius:3,borderColor:['#378add','#0f6e56','#ba7517'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GC},ticks:{color:TC,font:{size:11}}},y:{grid:{color:GC},ticks:{color:TC,font:{size:9},callback:v=>v.toFixed(2)+'%'},min:0,max:1.2}}}});}
+
+const LPAOVD={labels:['0–100','100–200','200–500','500–1000','1000–2000','2001–5000'],top1_cvr:[0.68,1.04,0.58,0.18,0.29,0.24],top2_cvr:[0.93,0.94,0.67,0.49,0.35,0.21],top3_cvr:[1.05,1.01,0.99,0.06,0.34,0.24],top1_bounce:[65.07,74.41,76.87,81.57,69.10,71.52],top2_bounce:[59.20,73.18,75.38,73.76,68.85,69.79],top3_bounce:[57.28,66.24,64.01,79.54,63.81,71.47],top1_above:[51.19,40.82,48.02,33.37,38.60,57.78],top2_above:[40.42,37.54,40.87,27.20,43.84,50.44],top3_above:[38.12,36.35,39.27,42.57,39.55,55.16]};
+let lpaovChartRef;
+function setLPAovMode(m){document.querySelectorAll('#s9 .tr .tb').forEach((b,i)=>b.classList.toggle('on',['cvr','bounce','above'][i]===m));renderLPAov(m);if(openSecs.has('s9'))renderCmpS9();}
+function clv(v,m){if(m==='cvr')return v>0.8?'lg':v<0.3?'lb':'lw';if(m==='bounce')return v>75?'lb':v<60?'lg':'lw';return v>50?'lb':v<35?'lg':'lw';}
+function renderLPAov(m){
+  if(!m)m=['cvr','bounce','above'][Array.from(document.querySelectorAll('#s9 .tr .tb')).findIndex(b=>b.classList.contains('on'))];
+  document.getElementById('lpaov-content').innerHTML='<div class="aov-row hd"><div>价格带</div><div style="text-align:center">Top 1</div><div style="text-align:center">Top 2</div><div style="text-align:center">Top 3</div><div></div><div></div></div>'+LPAOVD.labels.map((l,i)=>{const v1=LPAOVD['top1_'+m][i],v2=LPAOVD['top2_'+m][i],v3=LPAOVD['top3_'+m][i];return`<div class="aov-row ${i%2===1?'even':''}"><div style="font-size:12px;font-weight:500;color:var(--t)">${l}</div><div class="av ${clv(v1,m)}">${v1.toFixed(2)}%</div><div class="av ${clv(v2,m)}">${v2.toFixed(2)}%</div><div class="av ${clv(v3,m)}">${v3.toFixed(2)}%</div><div></div><div></div></div>`;}).join('');
+  if(lpaovChartRef){lpaovChartRef.data.datasets[0].data=LPAOVD['top1_'+m];lpaovChartRef.data.datasets[1].data=LPAOVD['top2_'+m];lpaovChartRef.data.datasets[2].data=LPAOVD['top3_'+m];lpaovChartRef.update();}
+}
+renderLPAov('cvr');
+function initLPAovChart(){lpaovChartRef=new Chart(document.getElementById('lpaovChart').getContext('2d'),{type:'bar',data:{labels:LPAOVD.labels,datasets:[{label:'Top 1',data:LPAOVD.top1_cvr,backgroundColor:'#534ab7',borderRadius:2},{label:'Top 2',data:LPAOVD.top2_cvr,backgroundColor:'#0f6e56',borderRadius:2},{label:'Top 3',data:LPAOVD.top3_cvr,backgroundColor:'#d85a30',borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:GC},ticks:{color:TC,font:{size:10}}},y:{grid:{color:GC},ticks:{color:TC,font:{size:9},callback:v=>v.toFixed(2)+'%'},min:0}}}});}
+
+function initQuadrant(){
+  if(!document.getElementById('quadrantChart'))return;
+  const ch=[{n:'广告 (Ads)',x:64.43,y:0.60,r:22,col:'#534ab7'},{n:'直接访问',x:24.62,y:1.60,r:14,col:'#378add'},{n:'搜索引擎',x:7.52,y:1.54,r:9,col:'#0f6e56'},{n:'Email',x:1.94,y:2.20,r:6,col:'#d85a30'},{n:'社交网络',x:1.97,y:0.49,r:6,col:'#ba7517'},{n:'外部链接',x:1.46,y:1.43,r:5,col:'#888780'}];
+  new Chart(document.getElementById('quadrantChart').getContext('2d'),{type:'bubble',data:{datasets:ch.map(c=>({label:c.n,data:[{x:c.x,y:c.y,r:c.r}],backgroundColor:c.col+'bb',borderColor:c.col,borderWidth:1.5}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.x.toFixed(1)}% · CVR ${c.raw.y.toFixed(2)}%`}}},scales:{x:{min:-5,max:80,title:{display:true,text:'← 流量占比（%）→',color:TC,font:{size:10}},grid:{color:GC},ticks:{color:TC,font:{size:9}}},y:{min:0,max:2.8,title:{display:true,text:'↑ CVR（%）',color:TC,font:{size:10}},grid:{color:GC},ticks:{color:TC,font:{size:9}}}}},plugins:[{id:'ql',beforeDraw(chart){const{ctx,chartArea:{left,right,top,bottom},scales:{x,y}}=chart;const mx=x.getPixelForValue(10),my=y.getPixelForValue(1.0);ctx.save();ctx.strokeStyle=D?'rgba(255,255,255,.1)':'rgba(0,0,0,.08)';ctx.setLineDash([4,4]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(mx,top);ctx.lineTo(mx,bottom);ctx.stroke();ctx.beginPath();ctx.moveTo(left,my);ctx.lineTo(right,my);ctx.stroke();ctx.setLineDash([]);ctx.font='10px Sora,sans-serif';ctx.fillStyle=D?'rgba(255,255,255,.2)':'rgba(0,0,0,.18)';ctx.fillText('提效重点',left+5,top+12);ctx.fillText('明星渠道',mx+5,top+12);ctx.fillText('审慎观察',left+5,bottom-4);ctx.fillText('放量机会',mx+5,bottom-4);ctx.restore();}}]});
+}
+
+initScatter();initOverview();initTimeline();
+// Show hint by default until my data is loaded
+const _h=document.getElementById('s1-my-hint');if(_h)_h.style.display='flex';
+
+// 初始化品类KPI条
+updateCatKpiBar('');
+
+// 监听两个品类选择器变化
+['pt-category','my-cat-seg'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('change',function(){
+    updateCatKpiBar(this.value);
+    updateOverviewChart();
+    // 同步另一个选择器
+    const other=document.getElementById(id==='pt-category'?'my-cat-seg':'pt-category');
+    if(other&&other.value!==this.value)other.value=this.value;
+  });
+});
+// Show preview mode notice
+if(IS_PREVIEW){const pn=document.getElementById('preview-notice');if(pn)pn.style.display='block';}initAovChart();initRegion();initLPAovChart();
+
+/* ── localStorage 表单持久化 ─────────────────────────────────────── */
+const FORM_FIELDS=[
+  'pt-apikey','pt-profileid','pt-start','pt-end',
+  'pt-norm-start','pt-norm-end','pt-conversion','pt-category',
+  'pt-url-0','pt-url-1','pt-url-2','pt-url-3','pt-url-4',
+  'my-cvr','my-new-cvr','my-ret-cvr','my-new-pct',
+  'my-ads-cvr','my-email-cvr','my-direct-cvr','my-search-cvr',
+  'my-lp-cvr','my-bounce','my-above','my-aov-seg','my-cat-seg','my-region-seg',
+];
+
+
+function toggleKeyVis(){
+  const inp=document.getElementById('pt-apikey');
+  const btn=document.getElementById('btn-toggle-key');
+  if(!inp||!btn)return;
+  if(inp.type==='text'){
+    inp.type='password'; btn.textContent='显示';
+  } else {
+    inp.type='text'; btn.textContent='隐藏';
+  }
+}
+function saveFormState(){
+  const state={};
+  FORM_FIELDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)state[id]=el.value;
+  });
+  try{localStorage.setItem('pt_form_state',JSON.stringify(state));}catch(e){}
+}
+
+function restoreFormState(){
+  try{
+    const raw=localStorage.getItem('pt_form_state');
+    if(!raw)return;
+    const state=JSON.parse(raw);
+    let restored=0;
+    FORM_FIELDS.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el&&state[id]!==undefined&&state[id]!==''){
+        el.value=state[id];
+        restored++;
+      }
+    });
+    // 有任何字段恢复了就显示提示
+    if(restored>0){
+      const notice=document.getElementById('restore-notice');
+      if(notice){
+        notice.style.cssText='display:flex;background:var(--teal-bg);border-radius:var(--r);padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--teal-t);align-items:center;justify-content:space-between';
+        const span=notice.querySelector('span');
+        if(span)span.textContent=`✓ 已恢复上次填写的内容（${restored} 个字段）`;
+      }
+      // 验证关键字段
+      const key=document.getElementById('pt-apikey');
+      const pid=document.getElementById('pt-profileid');
+      const url=document.getElementById('pt-url-0');
+      console.log('[恢复状态] API Key:', key?.value?.length>0?'已填('+key.value.length+'字符)':'空',
+        '| Profile ID:', pid?.value||'空',
+        '| URL1:', url?.value||'空');
+    }
+  }catch(e){}
+}
+
+// 监听所有表单字段，实时保存（input + change 双保险）
+FORM_FIELDS.forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('input',saveFormState);
+  el.addEventListener('change',saveFormState);
+});
+// 页面关闭前兜底保存
+window.addEventListener('beforeunload',saveFormState);
+
+function clearSavedForm(){
+  try{localStorage.removeItem('pt_form_state');}catch(e){}
+  FORM_FIELDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&id!=='pt-start'&&id!=='pt-end'&&id!=='pt-norm-start'&&id!=='pt-norm-end')el.value='';
+  });
+  const notice=document.getElementById('restore-notice');
+  if(notice)notice.style.display='none';
+}
+
+// 页面加载时恢复 — 用 setTimeout 确保 DOM 完全就绪
+window.addEventListener('load', function(){
+  setTimeout(restoreFormState, 100);
+});
+// init region selector
+selRegionIdx=0;
+
+/* ── Editable title & date label ─────────────────────────────────────── */
+function startEditTitle(){
+  const d=document.getElementById('page-title-display');
+  const i=document.getElementById('page-title-input');
+  const h=document.getElementById('title-edit-hint');
+  d.style.display='none'; if(h)h.style.display='none';
+  i.style.display='block'; i.value=d.textContent; i.focus(); i.select();
+}
+function finishEditTitle(){
+  const d=document.getElementById('page-title-display');
+  const i=document.getElementById('page-title-input');
+  const h=document.getElementById('title-edit-hint');
+  const v=i.value.trim()||'2024 大促行为数据全景';
+  d.textContent=v; d.style.display='block';
+  if(h)h.style.display='inline';
+  i.style.display='none';
+  document.title=v+' · Ptengine';
+}
+function startEditDate(){
+  const d=document.getElementById('date-label-display');
+  const i=document.getElementById('date-label-input');
+  d.style.display='none'; i.style.display='inline-block'; i.focus(); i.select();
+}
+function finishEditDate(){
+  const d=document.getElementById('date-label-display');
+  const i=document.getElementById('date-label-input');
+  const v=i.value.trim()||'大促 11.01–11.30';
+  d.textContent=v; d.style.display='inline-flex';
+  i.style.display='none';
+}
+// Hover hint on title
+document.addEventListener('DOMContentLoaded',()=>{
+  const t=document.getElementById('page-title-display');
+  if(t){t.addEventListener('mouseenter',()=>t.style.borderBottomColor='var(--border-s)');
+        t.addEventListener('mouseleave',()=>t.style.borderBottomColor='transparent');}
+});
+
+/* ── Fetch conversion goals list ─────────────────────────────────────── */
+let _goalsList = []; // cache
+
+async function ptFetchGoals(){
+  const{key,pid,start,end}=ptGetCreds();
+  if(!key||!pid){
+    showGoalStatus('请先填写 API Key 和 Profile ID','err');
+    return;
+  }
+  const btn=document.getElementById('btn-fetch-goals');
+  if(btn){btn.disabled=true;btn.textContent='查询中...';}
+  showGoalStatus('正在拉取转化目标列表...','');
+
+  try{
+    // queryType "regular" returns one row per positive conversion goal with name + metrics
+    // No conversionName needed — returns ALL goals
+    const data=await ptPost(key,'/open-api/v1/conversion/query',{
+      profileId:pid,
+      startDate:start,
+      endDate:end,
+      queryType:'regular',
+      lang:'ZH'
+    });
+
+    // regular 响应: 顶层数组 [{conversionName, conversions, conversionRate, revenue}, ...]
+    // 或包在 {rows:[...]} / {list:[...]} / {data:[...]} 里
+    let rows=[];
+    if(Array.isArray(data)) rows=data;
+    else if(Array.isArray(data.rows)) rows=data.rows;
+    else if(Array.isArray(data.list)) rows=data.list;
+    else if(Array.isArray(data.data)) rows=data.data;
+    else if(Array.isArray(data.goals)) rows=data.goals;
+
+    if(rows.length===0){
+      // 可能时间段内无数据，但目标仍然存在 — 告知用户
+      showGoalStatus('该时间段内无转化记录（目标可能存在但无数据），建议调宽时间范围后重试，或到 Ptengine → 转化 手动查看目标名称','warn');
+      return;
+    }
+
+    _goalsList=rows;
+    renderGoalDropdown(rows);
+    showGoalStatus(`找到 ${rows.length} 个转化目标，点击选择 ↑`,'ok');
+
+  }catch(e){
+    showGoalStatus('✗ 拉取失败：'+e.message+' · 如果持续失败，请到 Ptengine → 转化 页面手动复制目标名称','err');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='查询目标列表';}
+  }
+}
+
+function renderGoalDropdown(goals){
+  const dd=document.getElementById('goal-dropdown');
+  if(!dd)return;
+  dd.style.display='block';
+  // "regular" rows: {conversionName, conversions, conversionRate, conversionValue, ...}
+  dd.innerHTML=goals.map((g)=>{
+    const name=typeof g==='string'?g:
+      (g.conversionName||g.goalName||g.name||g.label||Object.values(g)[0]||String(g));
+    const cnt=g.conversions||'';
+    const rate=typeof g.conversionRate==='object'
+      ?(g.conversionRate?.value||'')
+      :(g.conversionRate||'');
+    const safeName=name.replace(/'/g,"&apos;");
+    return`<div onclick="selectGoal('${safeName}',this)"
+      style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;transition:background .1s"
+      onmouseenter="this.style.background='var(--surface2)'"
+      onmouseleave="this.style.background=''">
+      <span style="font-weight:500;color:var(--t)">${name}</span>
+      <div style="display:flex;gap:10px;align-items:center">
+        ${cnt?`<span style="font-size:10px;font-family:DM Mono,monospace;color:var(--t2)">${cnt} 次</span>`:''}
+        ${rate?`<span style="font-size:10px;font-family:DM Mono,monospace;color:var(--teal)">${rate}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterGoalList(query){
+  if(!_goalsList.length)return;
+  const q=query.trim().toLowerCase();
+  const filtered=q?_goalsList.filter(g=>{
+    const n=typeof g==='string'?g:(g.conversionName||g.name||g.goalName||'');
+    return n.toLowerCase().includes(q);
+  }):_goalsList;
+  const dd=document.getElementById('goal-dropdown');
+  if(filtered.length){renderGoalDropdown(filtered);}
+  else if(dd){dd.style.display='none';}
+}
+
+function selectGoal(name,el){
+  const inp=document.getElementById('pt-conversion');
+  if(inp)inp.value=name;
+  const dd=document.getElementById('goal-dropdown');
+  if(dd)dd.style.display='none';
+  showGoalStatus(`✓ 已选择：${name}`,'ok');
+}
+
+function showGoalStatus(msg,type){
+  const el=document.getElementById('goal-fetch-status');
+  if(!el)return;
+  el.style.display='block';
+  el.textContent=msg;
+  el.style.color=type==='ok'?'var(--teal)':type==='err'?'var(--coral)':type==='warn'?'var(--amber)':'var(--t3)';
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click',e=>{
+  const dd=document.getElementById('goal-dropdown');
+  const inp=document.getElementById('pt-conversion');
+  const btn=document.getElementById('btn-fetch-goals');
+  if(dd&&!dd.contains(e.target)&&e.target!==inp&&e.target!==btn){
+    dd.style.display='none';
+  }
+});
+</script>
+</body>
+</html>
